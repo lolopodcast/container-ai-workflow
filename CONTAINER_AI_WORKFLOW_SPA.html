@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 容器化與高階 Agent 數據情報工作流</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'], serif: ['Merriweather','serif'] } } }
+  }
+</script>
+
+<style>
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+  .animate-fade-in { animation: fadeInUp 0.5s ease-out forwards; }
+  .perspective { perspective: 1000px; }
+  .transform-style-3d { transform-style: preserve-3d; }
+  .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .rotate-y-180 { transform: rotateY(180deg); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .dark ::-webkit-scrollbar-thumb { background: #475569; }
+  header, footer, button, [role="button"], .ui-decoration { -webkit-user-select: none; user-select: none; }
+  input, textarea, select { -webkit-user-select: text; user-select: text; }
+  html, body { overflow-x: hidden; }
+</style>
+</head>
+<body class="font-sans">
+<div id="root"></div>
+
+<script>
+(function(){
+  var ALLOWED = ['localhost','127.0.0.1']; // TODO: 部署到正式網域前，請把該網域加入此陣列
+  var REDIRECT = 'https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo';
+  var isFile = location.protocol === 'file:';
+  if (!isFile && !ALLOWED.some(function(d){ return location.hostname === d || location.hostname.endsWith('.'+d); })) {
+    document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif"><h1>Access Denied</h1><p>This resource is not authorised on this domain.</p></div>';
+    setTimeout(function(){ location.href = REDIRECT; }, 3000);
+    return;
+  }
+  if (window.self !== window.top) {
+    try { window.top.location.href = window.self.location.href; }
+    catch(e) { document.body.innerHTML = '<div style="text-align:center;padding:60px"><h1>Frame Blocked</h1><p>This content cannot be embedded.</p></div>'; }
+  }
+})();
+(function(){
+  var MSG = 'Intellectual Property of Prof. Shihmin Lo';
+  var toastTimer;
+  function showToast(){
+    var el = document.getElementById('__copyright_toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = '__copyright_toast';
+      el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#004030;color:#D8C3A5;padding:10px 16px;border-radius:8px;font-size:13px;font-family:sans-serif;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none;';
+      el.textContent = MSG;
+      document.body.appendChild(el);
+    }
+    el.style.opacity = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.style.opacity = '0'; }, 2000);
+  }
+  document.addEventListener('contextmenu', function(e){
+    var sel = window.getSelection().toString().trim();
+    var isImg = e.target.tagName === 'IMG' || !!e.target.closest('svg');
+    if (sel.length > 0 && !isImg) return;
+    e.preventDefault();
+    showToast();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'F12') { e.preventDefault(); showToast(); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === 'u') { e.preventDefault(); showToast(); return; }
+    if (e.ctrlKey && e.shiftKey && ['i','j','c'].indexOf(e.key.toLowerCase()) !== -1) { e.preventDefault(); showToast(); return; }
+  });
+  document.addEventListener('dragstart', function(e){
+    if (e.target.tagName === 'IMG' || e.target.closest('svg')) e.preventDefault();
+  });
+})();
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ---------- answer obfuscation ---------- */
+const _SALT = 'CAIW2026';
+const _e = (s, n) => {
+  const p = s + ':' + n;
+  let r = '';
+  for (let i = 0; i < p.length; i++) r += String.fromCharCode(p.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+  return btoa(r);
+};
+const _d = (token) => {
+  const decoded = atob(token);
+  let r = '';
+  for (let i = 0; i < decoded.length; i++) r += String.fromCharCode(decoded.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+  return parseInt(r.split(':')[1], 10);
+};
+const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
+
+/* ---------- module numbering ---------- */
+const NUM_LEARN = 4;
+const TOTAL = 1 + NUM_LEARN + 3;
+const IDX_LAB = NUM_LEARN + 1;
+const IDX_RES = NUM_LEARN + 2;
+const IDX_ANA = NUM_LEARN + 3;
+
+/* ---------- icons ---------- */
+const Icon = ({children, size=20, className=''}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const IconMenu = (p) => <Icon {...p}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
+const IconX = (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>;
+const IconHome = (p) => <Icon {...p}><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></Icon>;
+const IconMoon = (p) => <Icon {...p}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></Icon>;
+const IconSun = (p) => <Icon {...p}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></Icon>;
+const IconPlay = (p) => <Icon {...p}><polygon points="5 3 19 12 5 21 5 3"/></Icon>;
+const IconPause = (p) => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
+const IconSquare = (p) => <Icon {...p}><rect x="5" y="5" width="14" height="14" rx="1"/></Icon>;
+const IconChevronRight = (p) => <Icon {...p}><polyline points="9 18 15 12 9 6"/></Icon>;
+const IconChevronUp = (p) => <Icon {...p}><polyline points="18 15 12 9 6 15"/></Icon>;
+const IconGlobe = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 010 20 15 15 0 010-20z"/></Icon>;
+const IconActivity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const IconBookOpen = (p) => <Icon {...p}><path d="M2 4h7a4 4 0 014 4v12a3 3 0 00-3-3H2z"/><path d="M22 4h-7a4 4 0 00-4 4v12a3 3 0 013-3h8z"/></Icon>;
+const IconAlertTriangle = (p) => <Icon {...p}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
+const IconCheckCircle = (p) => <Icon {...p}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
+const IconArrowRight = (p) => <Icon {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></Icon>;
+const IconCpu = (p) => <Icon {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></Icon>;
+const IconTrendingUp = (p) => <Icon {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Icon>;
+const IconLayers = (p) => <Icon {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></Icon>;
+const IconFlag = (p) => <Icon {...p}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></Icon>;
+const IconZap = (p) => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
+const IconFlask = (p) => <Icon {...p}><path d="M9 2v6.5L4 18a2 2 0 002 3h12a2 2 0 002-3l-5-9.5V2"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="8.5" y1="13" x2="15.5" y2="13"/></Icon>;
+const IconZapLab = IconFlask;
+
+/* ---------- dictionary ---------- */
+const dict = {
+  zh: {
+    brand: "CAIW",
+    title: "AI 容器化與高階 Agent 數據情報工作流",
+    subtitle: "從容器到決策：一套可重複套用的高階 Agent 工作流知識庫",
+    nav_modules: "單元目錄", nav_prev: "← 上一單元", nav_next: "下一單元 →", nav_home: "首頁",
+    key_terms: "關鍵專有名詞", flip_prompt: "點擊翻轉",
+    flip_status: "已讀 {read} / 已顯示 {shown} / 總計 {total}",
+    flip_next: "下一組", flip_retry: "重新開始",
+    audio_read: "語音導覽",
+    quiz_title: "模組知識檢定",
+    quiz_status: "答對 {correct} / 已答 {answered} / 總計 {total}",
+    quiz_next: "下一組", quiz_retry: "重新測驗",
+    submit: "提交答案",
+    score: "得分", correct: "正確", incorrect: "錯誤", explanation: "解析",
+    overview_label: "Overview 概述",
+    highlights_label: "Highlights 重點",
+    deep_dive_label: "Deep Dive 深入解析",
+    wrapup_label: "Wrap-up 總結",
+
+    analytics_nav: "7. 學習歷程分析",
+    analytics_title: "學習歷程分析", analytics_desc: "本頁彙整你在各模組的停留時間、互動次數、測驗答對率與學習卡使用率，並提供弱點分析與 CSV 匯出。",
+    analytics_form_title: "基本資料（匯出前請填寫）",
+    analytics_group: "組別", analytics_group_select: "請選擇", analytics_dept: "系級",
+    analytics_dept_ph: "例：IBS3",
+    analytics_id: "學號", analytics_id_ph: "例：113212599",
+    analytics_name_en: "英文姓名", analytics_name_en_ph: "例：Shihmin Lo",
+    analytics_name_zh: "中文姓名", analytics_name_zh_ph: "例：王阿吉",
+    analytics_export_csv: "匯出 CSV 歷程記錄",
+    analytics_fill_required: "請填寫完整資訊以解鎖匯出",
+    analytics_refresh_prompt: "是否刷新紀錄儲存？",
+    group_options: ["G1","G2","G3","G4","G5","G6","G7","G8","G9","G10","G11","G12","Others"],
+    analytics_total_time: "總學習時間", analytics_total_clicks: "總互動點擊",
+    analytics_overall_acc: "總體測驗答對率",
+    analytics_card_usage: "學習卡使用率",
+    analytics_module: "模組", analytics_time: "停留時間",
+    analytics_clicks: "點擊次數", analytics_acc: "答對率",
+    analytics_correct_ans_total: "答對 / 已填答 / 總題數",
+    analytics_cards_read_total: "已讀 / 總卡數",
+    analytics_no_data: "尚未測驗", analytics_sec: "秒", analytics_times: "次",
+    analytics_progress_title: "整體學習進度",
+    analytics_progress_visited: "已瀏覽", analytics_progress_not_visited: "未瀏覽",
+    analytics_progress_quiz_done: "已測驗",
+    analytics_wp_title: "弱點分析與複習建議",
+    analytics_wp_incorrect: "答錯題目：",
+    analytics_wp_goto: "→ 前往複習此模組",
+    analytics_wp_allpass: "所有已測驗模組答對率均達 75% 以上，表現優異！",
+    analytics_wp_saved: "學習歷程已自動儲存於本機瀏覽器",
+    analytics_wp_clear: "🗑 清除歷程",
+    analytics_wp_clear_confirm: "確定要清除所有學習歷程資料嗎？此操作無法復原。",
+    analytics_wp_tts_intro: "以下是您的弱點分析。",
+    analytics_wp_tts_module: "模組：{name}，答對率 {acc}%，建議複習。",
+    analytics_wp_tts_allpass: "恭喜！所有已測驗模組答對率均達 75% 以上。",
+
+    m0_nav: "0. 執行概要",
+    m0_title: "AI 容器化與高階 Agent 數據情報工作流",
+    m0_intro: "這套知識庫要回答一個問題：當我們請 Claude Code 這類高階 AI Agent 幫忙建立一套「每日自動抓取資訊、驗證推論、產出決策建議」的情報系統時，背後到底發生了什麼事？答案並不是單一個聰明的模型在寫程式，而是一整套分層清楚的基礎設施，加上分工明確的多個子代理人（Subagent）團隊協同運作。我們會先建立一個核心比喻——把整個系統想像成一棟具備保全機制的建築物：容器是獨立的房子、套件與外掛是磚頭與裝潢、連接器是對外的水電管線、沙盒則是房子內部專門承接風險實驗的抗爆隔離艙。接著介紹兩支各司其職的 Agent 小組：負責讓程式碼「能跑」的技術實作小組，以及負責讓結論「站得住腳」的決策分析小組。最後把四層基礎設施與兩支 Agent 小組串成一條五步驟的標準工作流，並提供可以直接複製貼上的高階指令範本，讓您下一次與 AI 協作時，不必描述實作細節，只需要用架構語意下達任務即可。",
+    m0_why: "為什麼要理解這套架構？",
+    m0_why_desc: "多數人使用 AI 工具時，只看到「輸入指令、得到結果」這一層，卻不知道中間發生的隔離、賦能、連結、驗證四個關節，其實決定了系統會不會失控、資料會不會外洩、結論站不站得住腳。理解這套架構，才能對 AI 下達精準且安全的高階指令，而不是每次都碰運氣。",
+    m0_modules: [
+      { num:"01", title:"四層基礎設施", desc:"容器、套件、外掛、連接器、沙盒五個概念，如何組成一棟具備保全機制的建築。" },
+      { num:"02", title:"Agent 雙小組", desc:"技術實作小組與決策分析小組如何分工，各自形成閉環。" },
+      { num:"03", title:"五步驟工作流", desc:"從環境初始化到終端輸出，一條完整的情報產出流水線。" },
+      { num:"04", title:"指令範本實戰", desc:"如何用架構語意，而非實作細節，向 AI 下達高階指令。" }
+    ],
+    m0_stats: [
+      { val:"4", label:"基礎設施層" },
+      { val:"2", label:"Agent 小組" },
+      { val:"5", label:"工作流步驟" },
+      { val:"1", label:"決策產出系統" }
+    ],
+    m0_start: "開始學習 →",
+
+    m1_nav: "1. 四層基礎設施",
+    m1_title: "核心設計原則與四層基礎設施",
+    m1_overview: "本模組建立整套知識庫的地基比喻：把 AI 系統想像成一棟具備保全機制的建築，由內而外分成隔離層、能力層、通訊層、安全層，分別對應容器、套件與外掛、連接器、沙盒五個概念。",
+    m1_highlights: ["容器 Container","套件 Package","外掛 Plugin","連接器 Connector","沙盒 Sandbox"],
+    m1_p1: "容器（Container）是整套架構的地基，扮演「一棟獨立的房子」的角色：它把應用程式與作業系統底層、運行環境、依賴套件全部打包在一起，形成一個輕量化的隔離空間。它的意義在於「一致性」——同一個容器不管搬到哪一台電腦、哪一個雲端平台，跑出來的結果都一模一樣，這正是 AI 模型能夠穩定運作的前提。",
+    m1_p2: "在房子蓋好之後，我們需要磚頭與裝潢，這就是套件（Package）與外掛（Plugin）扮演的能力層角色。套件是預先寫好、無法獨立執行的功能函式庫，例如負責資料分析的 pandas、負責網頁爬蟲的 playwright；外掛則依附在主程式上，用來擴充或美化特定功能，例如 PDF 加密解鎖、多模態視覺處理。兩者都不能單獨運作，卻是賦予系統實際能力不可或缺的建材。",
+    m1_p3: "接著是通訊層的連接器（Connector），扮演「外接的水電管線」：它負責在不同系統或平台之間牽線、傳遞資料，本身並不執行任何邏輯運算，而是安全地讓 AI 串接到外部世界，例如公司的 SQL 資料庫、Google Drive 或外部新聞 API。",
+    m1_p4: "最關鍵、也是最容易被誤解的一層，是安全層的沙盒（Sandbox）。許多人直覺會把沙盒想像成「房子外圍的鐵絲網」，用來擋住外部入侵者；但這個比喻其實方向錯了——沙盒真正要處理的風險來自「內部」：AI 自己生成、尚未驗證的程式碼。因此更精確的比喻，是房子內部一間專門的抗爆隔離艙：AI 生成的程式碼會被限制在這個極低權限的房間裡執行，就算邏輯出錯甚至具有攻擊性，危險也會被鎖死在隔離艙內，不會波及核心系統。",
+    m1_wrapup: "四層基礎設施由內而外分別是隔離層（容器）、能力層（套件與外掛）、通訊層（連接器）、安全層（沙盒）。容器界定邊界、套件與外掛提供能力、連接器負責對外連結、沙盒負責對內止損，四者分工明確、缺一不可，共同構成 AI 系統穩定且安全運作的基礎。",
+    m1_terms: [
+      { front:"容器 Container", back:"獨立的房子：把應用程式與運行環境打包成一致的隔離空間，確保到哪裡跑結果都一樣。" },
+      { front:"套件 Package", back:"蓋房子的磚頭：預先寫好、無法獨立執行的功能函式庫，如 pandas、playwright。" },
+      { front:"外掛 Plugin", back:"房子的裝潢：依附主程式運作，用來擴充特定功能，如 PDF 解鎖、多模態視覺。" },
+      { front:"連接器 Connector", back:"外接的水電管線：在系統與平台之間牽線傳遞資料，本身不執行邏輯運算。" },
+      { front:"沙盒 Sandbox", back:"房子內部的抗爆隔離艙：承接內部風險（AI 生成的程式碼），出錯不波及核心系統。" },
+      { front:"隔離層", back:"由容器構成，界定整個系統運作的邊界。" },
+      { front:"能力層", back:"由套件與外掛構成，賦予系統實際可用的功能。" },
+      { front:"安全層", back:"由沙盒構成，專門止損內部風險，而非防禦外部入侵。" }
+    ],
+    m1_q: [
+      { q:"下列哪一個比喻最能正確描述沙盒（Sandbox）的功能？", opts:["房子外圍用來擋外部入侵者的鐵絲網","房子內部專門承接風險實驗的抗爆隔離艙","連接房子內外的水電管線","蓋房子用的磚頭"], ans:_A1, exp:"沙盒要限制的是內部（AI 自己生成、尚未驗證的程式碼）風險，而非外部入侵，因此正確比喻是內部隔離艙，而非外圍鐵絲網。" },
+      { q:"套件（Package）與外掛（Plugin）的共同特徵是什麼？", opts:["兩者都能獨立執行，不依賴任何主程式","兩者都必須依附在某個環境或主程式上才能運作","兩者都是負責跨系統傳遞資料的橋樑","兩者都是限制風險執行的隔離空間"], ans:_A1, exp:"套件是函式庫、外掛依附主程式，兩者皆無法獨立執行，都屬於能力層的建材。" },
+      { q:"連接器（Connector）在架構中主要負責什麼？", opts:["執行複雜的商業邏輯運算","在系統或平台之間牽線、傳遞資料","把程式碼隔離在低權限環境中執行","提供選色與版面等裝飾功能"], ans:_A1, exp:"連接器本身不執行邏輯，只負責資料的牽線與傳遞，例如串接資料庫或外部 API。" },
+      { q:"為什麼容器（Container）被稱為整套架構的「地基」？", opts:["因為它負責美化使用者介面","因為它把應用程式與運行環境打包成一致的隔離空間，是後續一切運作的前提","因為它負責辯證分析商業影響","因為它是所有套件的集合體，不需要其他概念"], ans:_A1, exp:"容器提供一致且隔離的執行環境，是套件、外掛、連接器、沙盒都要依附其上運作的基礎邊界。" },
+      { q:"四層基礎設施由內而外的正確排列順序為何？", opts:["安全層→通訊層→能力層→隔離層","隔離層→能力層→通訊層→安全層","能力層→隔離層→安全層→通訊層","通訊層→安全層→隔離層→能力層"], ans:_A1, exp:"由內而外依序是隔離層（容器）→能力層（套件/外掛）→通訊層（連接器）→安全層（沙盒）。" }
+    ],
+
+    m2_nav: "2. Agent 雙小組",
+    m2_title: "Agent 協作架構：雙小組制",
+    m2_overview: "本模組介紹高階 AI Agent 如何依「目的」拆解出兩支獨立小組：負責讓程式碼能跑的技術實作小組，以及負責讓結論站得住腳的決策分析小組，兩者各自形成閉環，卻共用同一個沙盒環境執行與驗證。",
+    m2_highlights: ["工程師 Subagent","測試員 Subagent","正方分析師","反方分析師","綜合仲裁者","自癒閉環","辯證推論"],
+    m2_p1: "當我們使用 Claude Code 這類具備自我迭代能力的工具處理宏觀任務時，AI 不會只靠單一角色完成所有工作，而是在幕後拆解成不同的 Subagent（子代理人）團隊協同運作。第一支是技術實作小組（Engineering Squad），由工程師與測試員兩個角色組成：工程師負責理解需求與上下文，撰寫對應的自動化腳本或分析程式碼；測試員則負責把程式碼丟進沙盒執行，捕捉報錯訊息，並回饋給工程師修正。兩者形成「寫 Code → 報錯 → 自我修正 → 重新執行」的自癒閉環，一直運作到程式成功為止，過程完全不需要驚動使用者。",
+    m2_p2: "但光有技術實作小組還不夠。原始知識庫的工作流第 4 步驟曾提到「正反方觀點在數據模擬中進行辯證分析與推論」，這其實暗示需要另一支完全不同性質的團隊——決策分析小組（Analyst Squad）。這支小組不負責寫程式，而是針對「數據代表的意義」進行辯證：正方分析師從技術可行性與市場機會角度，論證數據的正面意義；反方分析師則從風險、時程延遲、商業衝擊角度提出質疑與反例；最後由綜合仲裁者彙整雙方論點，收斂成一個附帶信心水準的可執行結論。",
+    m2_p3: "值得注意的是，兩支小組雖然目的不同，卻共用同一個沙盒環境來執行與驗證：技術實作小組驗證的是「程式碼能不能跑」，決策分析小組驗證的是「結論站不站得住腳」。把這兩種閉環分開定義，能避免我們誤以為「AI 自動生成程式碼」與「AI 自動做出商業判斷」是同一件事——前者是工程問題，後者是判斷力問題，需要不同角色與不同驗收標準。",
+    m2_wrapup: "AI Agent 的高階協作並非單一角色包辦一切，而是依目的拆成兩支小組：技術實作小組（工程師＋測試員）形成程式碼自癒閉環；決策分析小組（正方＋反方＋綜合仲裁者）形成辯證推論閉環。兩者共用沙盒作為驗證場域，但驗收標準完全不同，這正是原始知識庫容易被忽略、卻是本次修訂補上的關鍵角色缺口。",
+    m2_terms: [
+      { front:"工程師 Subagent", back:"技術實作小組成員，負責理解需求並撰寫自動化腳本或分析程式碼。" },
+      { front:"測試員 Subagent", back:"技術實作小組成員，負責把程式碼丟進沙盒執行、捕捉錯誤並回饋修正。" },
+      { front:"自癒閉環", back:"寫 Code → 報錯 → 修正 → 重新執行，直到成功運行為止的技術驗證迴圈。" },
+      { front:"正方分析師", back:"決策分析小組成員，從技術可行性與市場機會角度論證數據的正面意義。" },
+      { front:"反方分析師", back:"決策分析小組成員，從風險、時程、商業衝擊角度提出質疑與反例。" },
+      { front:"綜合仲裁者", back:"決策分析小組成員，彙整正反論點，收斂成附帶信心水準的可執行結論。" },
+      { front:"辯證推論閉環", back:"正方論證 → 反方質疑 → 仲裁收斂，用來驗證「結論站不站得住腳」的分析迴圈。" }
+    ],
+    m2_q: [
+      { q:"技術實作小組的『自癒閉環』具體是指哪個流程？", opts:["正方論證→反方質疑→仲裁收斂","寫 Code→報錯→修正→重新執行，直到成功","抓取新聞→比對歷史庫→產出摘要","建立容器→載入套件→連接外部資料"], ans:_A1, exp:"自癒閉環是工程師與測試員之間「寫 Code、丟進沙盒執行、報錯、修正」不斷循環，直到程式成功運行為止。" },
+      { q:"為什麼原始知識庫需要新增『決策分析小組』？", opts:["因為工程師與測試員效率不夠，需要增援人力","因為原稿工作流描述了正反方辯證分析，卻沒有定義對應的角色","因為沙盒環境需要更多人維護","因為連接器需要多人輪班確保資料抓取"], ans:_A1, exp:"原稿工作流第4步驟提到「正反方辯證」，但先前只定義了工程師與測試員，缺乏對應角色，因此新增決策分析小組填補此缺口。" },
+      { q:"正方分析師與反方分析師的差異在於？", opts:["正方負責寫程式，反方負責測試程式","正方論證技術可行性與市場機會，反方提出風險與商業衝擊的質疑","正方負責抓資料，反方負責存資料","兩者其實沒有差異，只是名稱不同"], ans:_A1, exp:"正方分析師著重正面論證，反方分析師著重風險與質疑，兩者觀點對立才能形成有效辯證。" },
+      { q:"技術實作小組與決策分析小組的共通點是什麼？", opts:["兩者都負責寫商業報告","兩者都共用同一個沙盒環境來執行與驗證，但驗收標準不同","兩者都不需要沙盒環境","兩者的工作內容完全相同，只是分工重複"], ans:_A1, exp:"兩支小組共用沙盒作為驗證場域：技術小組驗證「程式碼能不能跑」，分析小組驗證「結論站不站得住腳」，驗收標準不同。" },
+      { q:"綜合仲裁者（Synthesizer）的主要職責是？", opts:["撰寫自動化腳本程式碼","把程式碼丟進沙盒執行並捕捉錯誤","彙整正反方論點，收斂成附帶信心水準的可執行結論","定期抓取新聞資料並比對歷史庫"], ans:_A2, exp:"綜合仲裁者不寫程式也不辯論，而是彙整正反雙方觀點，形成最終可執行的結論。" }
+    ],
+
+    m3_nav: "3. 五步驟工作流",
+    m3_title: "標準工作流 SOP：五步驟",
+    m3_overview: "本模組把四層基礎設施與兩支 Agent 小組串成一條完整的情報產出流水線：從環境初始化、工具載入、安全牽線資料，到沙盒驗證與辯證，最後產出 BI 圖表與決策建議。",
+    m3_highlights: ["環境初始化","工具與技能載入","安全資料牽線","沙盒驗證與辯證","終端輸出"],
+    m3_p1: "第一步是環境初始化，對應容器概念：Claude Code 以目前的專案目錄為邊界，啟動一個獨立運作的邏輯容器環境，確保專案資料與本機系統安全隔離。這一步沒有牽涉任何 Agent 小組，純粹是基礎設施的建立。",
+    m3_p2: "第二步是工具與技能載入，對應套件與外掛：AI 會自主檢視任務需求，下載資料分析、網頁爬蟲等套件，並載入處理特定格式（如 PDF 解鎖、多模態視覺）的外掛工具，讓後續步驟具備完整的執行能力。第三步則是安全資料牽線，對應連接器：透過 API 連接器或檔案系統連接器，定時抓取設定主題的最新新聞資料，並與 knowledge_base 資料夾下累積的歷史知識庫進行差異比對，產出每日晨報摘要素材。",
+    m3_p3: "第四步是整條工作流的核心，對應沙盒，也是兩支 Agent 小組真正登場的階段：技術實作小組（工程師＋測試員）撰寫並跑通評估用的科學數據模型；決策分析小組（正方＋反方＋綜合仲裁者）則在沙盒的數據模擬結果上，針對新舊數據進行辯證分析與推論。即便程式碼邏輯有誤、或推論一度出現偏差，危險與錯誤都會被鎖死在沙盒內，不會波及核心系統。",
+    m3_p4: "第五步是終端輸出，這一步刻意不對應任何一個基礎設施概念，因為它是前四層共同服務的最終目的：沙盒驗證成功後，AI 將數據導出，自動渲染成網頁 BI 趨勢圖表，並綜合決策分析小組的辯證結論，在終端機輸出『建議決策行動』與『應持續追蹤議題』。沒有這一步的產出，前面的隔離、賦能、連結、驗證都失去意義。",
+    m3_wrapup: "五步驟工作流依序是：環境初始化（容器）→ 工具與技能載入（套件／外掛）→ 安全資料牽線（連接器）→ 沙盒驗證與辯證（技術與分析雙小組）→ 終端輸出（BI 圖表與決策建議）。前四步是基礎設施逐層搭建的過程，第五步則是整條流水線唯一不對應基礎設施、卻是真正創造價值的產出目標。",
+    m3_terms: [
+      { front:"步驟1 環境初始化", back:"以專案目錄為邊界啟動獨立容器，隔離本機系統，對應容器概念。" },
+      { front:"步驟2 工具與技能載入", back:"自主安裝資料分析與爬蟲等套件，載入特定格式外掛，對應套件／外掛概念。" },
+      { front:"步驟3 安全資料牽線", back:"透過連接器定時抓取新聞並與歷史知識庫比對差異，產出晨報摘要素材。" },
+      { front:"步驟4 沙盒驗證與辯證", back:"技術小組跑通模型、分析小組辯證推論，皆在沙盒中進行，錯誤不外溢。" },
+      { front:"步驟5 終端輸出", back:"渲染 BI 圖表並輸出決策建議，是前四步共同服務的最終產出目標，不對應任何基礎設施概念。" }
+    ],
+    m3_q: [
+      { q:"五步驟工作流中，哪一步驟不對應任何一個基礎設施概念？", opts:["步驟1 環境初始化","步驟3 安全資料牽線","步驟5 終端輸出","步驟2 工具與技能載入"], ans:_A2, exp:"步驟5是前四層基礎設施共同服務的最終產出目標，本身並不對應容器、套件、連接器或沙盒中的任何一個。" },
+      { q:"步驟4（沙盒驗證與辯證）由哪些角色共同執行？", opts:["只有工程師一人","只有連接器負責","技術實作小組與決策分析小組共同在沙盒中執行","只有綜合仲裁者一人"], ans:_A2, exp:"步驟4是兩支 Agent 小組真正登場的階段：技術小組跑通模型，分析小組進行辯證推論，皆在沙盒環境中進行。" },
+      { q:"步驟3『安全資料牽線』主要使用哪個概念？", opts:["容器","套件","連接器","沙盒"], ans:_A2, exp:"步驟3透過 API 或檔案系統連接器抓取新聞資料並比對歷史知識庫，對應通訊層的連接器概念。" },
+      { q:"五步驟工作流的正確順序為何？", opts:["連接器→容器→套件→沙盒→輸出","容器→套件/外掛→連接器→沙盒→輸出","沙盒→容器→連接器→套件→輸出","輸出→容器→套件→連接器→沙盒"], ans:_A1, exp:"正確順序是環境初始化（容器）→工具載入（套件/外掛）→資料牽線（連接器）→沙盒驗證與辯證→終端輸出。" },
+      { q:"為什麼步驟五被形容為『整條流水線唯一創造價值的產出目標』？", opts:["因為它耗費的運算資源最多","因為前四步只是基礎設施搭建，沒有步驟五的產出，整套流程就沒有實際意義","因為它是唯一需要人工介入的步驟","因為它不需要任何前面步驟的結果"], ans:_A1, exp:"前四步（容器、套件/外掛、連接器、沙盒）都是基礎設施與驗證過程，唯有步驟五的 BI 圖表與決策建議才是使用者真正需要的價值產出。" }
+    ],
+
+    m4_nav: "4. 指令範本實戰",
+    m4_title: "實戰應用：指令範本與案例演練",
+    m4_overview: "本模組說明如何用『架構語意』而非『實作細節』向 Claude Code 這類高階 Agent 下達指令，並提供完整版與精簡版兩種指令範本，讓您能立刻套用到自己的主題上。",
+    m4_highlights: ["架構語意","Vibe Coding","完整版指令","精簡版指令","主題替換"],
+    m4_p1: "使用 Claude Code 這類高階 Agent 時，最常見的誤區是鉅細靡遺地描述「該怎麼寫爬蟲」「該用哪個圖表函式庫」——這其實是把原本該由 AI 自主決定的實作細節，錯誤地丟回給使用者承擔。真正有效率的做法是 Vibe Coding：只描述你要的『架構語意』與『產出目標』，把套件選型、程式碼撰寫、除錯這些細節，交給工程師與測試員這兩個 Subagent 自行處理。",
+    m4_p2: "完整版指令範本會明確標註每一句對應到哪一層概念或哪一支 Agent 小組：第一句對應連接器，要求抓取新聞並比對歷史知識庫；第二句對應決策分析小組，要求正反方辯證並收斂結論；第三句對應沙盒與技術實作小組，要求所有驗證腳本在沙盒中安全執行並自我修正；第四句對應終端輸出，要求產出 BI 圖表與決策建議。把指令拆成四句、各自對應一個概念或角色，可以大幅降低 AI 誤解需求的機率。",
+    m4_p3: "精簡版指令範本則把四句話濃縮成一句話，適合在已經熟悉這套架構語意之後，快速觸發同樣的工作流。無論是完整版或精簡版，核心技巧都是一樣的：把主題放進方括號 [主題] 的位置替換掉即可，不需要每次重新設計整套流程——因為容器、套件、連接器、沙盒、雙小組、五步驟工作流，本來就是一套可以重複套用的固定架構。",
+    m4_wrapup: "向高階 AI Agent 下達指令的關鍵，不在於描述實作細節，而在於用四層基礎設施與雙 Agent 小組的『架構語意』表達你要的產出目標。完整版指令逐句對應概念與角色，精簡版指令則是同一套邏輯的快速觸發版本；兩者共用同一個原則：只替換主題，架構本身可重複套用。",
+    m4_terms: [
+      { front:"架構語意", back:"用容器、連接器、沙盒、Agent小組等概念描述需求，而非描述實作細節。" },
+      { front:"Vibe Coding", back:"只描述目標與架構語意，把套件選型、程式碼撰寫與除錯交給 AI 自主完成的協作方式。" },
+      { front:"完整版指令", back:"四句話逐一對應連接器、決策分析小組、沙盒與技術小組、終端輸出四個環節。" },
+      { front:"精簡版指令", back:"把完整版四句話濃縮為一句話，適合熟悉架構後快速觸發同樣工作流。" },
+      { front:"主題替換", back:"指令範本中唯一需要更動的部分，架構本身可重複套用於不同主題。" }
+    ],
+    m4_q: [
+      { q:"使用 Claude Code 時最常見的誤區是什麼？", opts:["描述太多架構語意，讓 AI 無所適從","鉅細靡遺描述實作細節，把該由 AI 決定的部分丟回給使用者","完全不下達任何指令","只使用精簡版指令而不使用完整版"], ans:_A1, exp:"常見誤區是描述過多實作細節（如該用哪個爬蟲套件），這其實是把 AI 該自主決定的部分丟回給使用者承擔，違背 Vibe Coding 的精神。" },
+      { q:"完整版指令範本的第三句主要對應哪個概念與角色？", opts:["連接器與資料抓取","沙盒與技術實作小組","容器與環境初始化","外掛與格式處理"], ans:_A1, exp:"第三句要求所有驗證與運算腳本在沙盒環境中安全執行，若出錯由工程師與測試員自我修正，對應沙盒與技術實作小組。" },
+      { q:"精簡版指令範本與完整版的關係是？", opts:["兩者使用完全不同的架構原則","精簡版是同一套邏輯的快速觸發版本，把四句話濃縮成一句","精簡版比完整版包含更多細節","精簡版只適用於程式設計師，完整版才適合一般使用者"], ans:_A1, exp:"精簡版與完整版共用同一套架構語意，只是把四句話濃縮成一句，適合熟悉架構後快速使用。" },
+      { q:"套用指令範本到新主題時，真正需要更動的是？", opts:["整套架構語意都要重新設計","只需要替換方括號內的主題，架構本身可重複套用","需要重新定義所有 Agent 角色","需要重新撰寫沙盒的安全機制"], ans:_A1, exp:"架構（容器、連接器、沙盒、雙小組、五步驟）是固定可重複套用的，唯一需要更動的是主題本身。" }
+    ],
+
+    mlab_nav: "5. 互動實驗室", mlab_title: "互動實驗室",
+    mlab_desc: "透過四個小活動，親手體驗四層基礎設施的排序邏輯、概念與比喻的對應關係、指令範本的產生方式，以及沙盒如何把風險鎖在內部。",
+    mlab_labs: [
+      { title:"五步驟排序挑戰", desc:"依正確順序點選五個工作流步驟，測試你對整條流水線的掌握程度。" },
+      { title:"概念與比喻配對", desc:"把容器、套件、外掛、連接器、沙盒與正確比喻配對，加深記憶。" },
+      { title:"指令產生器", desc:"輸入你的主題，即時產生可直接複製使用的精簡版 Claude Code 指令。" },
+      { title:"沙盒風險模擬器", desc:"用滑桿模擬程式碼風險等級，直觀比較『有沙盒』與『沒有沙盒』時風險是否外溢。" }
+    ],
+    mlab_order_title: "五步驟排序挑戰", mlab_order_desc: "點擊下方步驟，依正確順序排出完整工作流。",
+    mlab_order_check: "檢查答案", mlab_order_reset: "重新開始",
+    mlab_order_correct: "順序完全正確！你已經掌握整條工作流。", mlab_order_wrong: "順序還不對，再試一次。",
+    mlab_match_title: "概念與比喻配對", mlab_match_desc: "先點選左側概念，再點選右側對應的比喻。",
+    mlab_match_reset: "重新配對", mlab_match_done: "全部配對正確！",
+    mlab_prompt_title: "指令產生器", mlab_prompt_ph: "輸入你的主題，例如：固態電池技術商用化",
+    mlab_prompt_generate: "產生指令", mlab_prompt_copy: "複製指令", mlab_prompt_copied: "已複製！",
+    mlab_risk_title: "沙盒風險模擬器", mlab_risk_desc: "拖曳滑桿模擬程式碼的風險等級，切換開關比較有無沙盒的差異。",
+    mlab_risk_slider: "程式碼風險等級", mlab_risk_toggle: "啟用沙盒保護",
+    mlab_risk_core: "核心系統", mlab_risk_sandbox_label: "沙盒環境",
+    mlab_risk_safe: "風險已鎖在沙盒內，核心系統安全", mlab_risk_danger: "沒有沙盒保護，風險已外溢到核心系統！",
+
+    mres_nav: "6. 外部學習資源", mres_title: "外部學習資源",
+    mres_desc: "以下資源可以幫助你把本知識庫的概念，對應到實際的技術文件與工具生態。",
+    mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作",
+
+    date: "Version 2026.07.20",
+    copyright: "For Educational Use Only",
+    architect_label: "架構設計：",
+    architect_name: "Prof. Shihmin Lo",
+    architect_url: "https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo"
+  },
+  en: {
+    brand: "CAIW",
+    title: "AI Containerization & Advanced Agent Intelligence Workflow",
+    subtitle: "From Container to Decision: A Reusable Advanced Agent Workflow Framework",
+    nav_modules: "Module Menu", nav_prev: "← Previous", nav_next: "Next →", nav_home: "Home",
+    key_terms: "Key Terms", flip_prompt: "Click to flip",
+    flip_status: "Read {read} / Shown {shown} / Total {total}",
+    flip_next: "Next", flip_retry: "Restart",
+    audio_read: "Audio Guide",
+    quiz_title: "Module Knowledge Check",
+    quiz_status: "Correct {correct} / Answered {answered} / Total {total}",
+    quiz_next: "Next", quiz_retry: "Retry",
+    submit: "Submit",
+    score: "Score", correct: "Correct", incorrect: "Incorrect", explanation: "Explanation",
+    overview_label: "Overview",
+    highlights_label: "Highlights",
+    deep_dive_label: "Deep Dive",
+    wrapup_label: "Wrap-up",
+
+    analytics_nav: "7. Learning Analytics",
+    analytics_title: "Learning Analytics", analytics_desc: "This page summarises your time on each module, interaction counts, quiz accuracy and flashcard usage, plus weak-point analysis and CSV export.",
+    analytics_form_title: "Basic Info (fill in before exporting)",
+    analytics_group: "Group", analytics_group_select: "Please select", analytics_dept: "Department/Year",
+    analytics_dept_ph: "e.g. IBS3",
+    analytics_id: "Student ID", analytics_id_ph: "e.g. 113212599",
+    analytics_name_en: "Name (English)", analytics_name_en_ph: "e.g. Shihmin Lo",
+    analytics_name_zh: "Name (Chinese)", analytics_name_zh_ph: "e.g. 王阿吉",
+    analytics_export_csv: "Export CSV Record",
+    analytics_fill_required: "Please fill in all fields to unlock export",
+    analytics_refresh_prompt: "Refresh saved records?",
+    group_options: ["G1","G2","G3","G4","G5","G6","G7","G8","G9","G10","G11","G12","Others"],
+    analytics_total_time: "Total Study Time", analytics_total_clicks: "Total Interactions",
+    analytics_overall_acc: "Overall Quiz Accuracy",
+    analytics_card_usage: "Flashcard Usage",
+    analytics_module: "Module", analytics_time: "Time Spent",
+    analytics_clicks: "Clicks", analytics_acc: "Accuracy",
+    analytics_correct_ans_total: "Correct / Answered / Total",
+    analytics_cards_read_total: "Read / Total",
+    analytics_no_data: "Not attempted", analytics_sec: "s", analytics_times: "x",
+    analytics_progress_title: "Overall Progress",
+    analytics_progress_visited: "Visited", analytics_progress_not_visited: "Not visited",
+    analytics_progress_quiz_done: "Quiz done",
+    analytics_wp_title: "Weak-Point Analysis & Review Suggestions",
+    analytics_wp_incorrect: "Missed questions:",
+    analytics_wp_goto: "→ Go review this module",
+    analytics_wp_allpass: "Every attempted module scores 75% or above — excellent work!",
+    analytics_wp_saved: "Learning history is auto-saved in this browser",
+    analytics_wp_clear: "🗑 Clear History",
+    analytics_wp_clear_confirm: "Clear all learning history? This cannot be undone.",
+    analytics_wp_tts_intro: "Here is your weak-point analysis.",
+    analytics_wp_tts_module: "Module: {name}, accuracy {acc}%, review recommended.",
+    analytics_wp_tts_allpass: "Congratulations! Every attempted module scores 75% or above.",
+
+    m0_nav: "0. Executive Summary",
+    m0_title: "AI Containerization & Advanced Agent Intelligence Workflow",
+    m0_intro: "This knowledge base answers one question: when we ask a high-level AI agent like Claude Code to build a system that automatically gathers information, verifies its reasoning, and produces decision recommendations every day, what is actually happening behind the scenes? The answer is not a single clever model writing code — it is a clearly layered infrastructure combined with multiple subagent teams working together with distinct responsibilities. We start with a core metaphor: imagine the whole system as a secured building. The container is an independent house; packages and plugins are the bricks and decorations; the connector is the plumbing and wiring reaching outside; the sandbox is a blast-proof isolation chamber inside the house built specifically to contain risky experiments. We then introduce two specialised agent squads — an engineering squad that makes the code run, and an analyst squad that makes the conclusions hold up. Finally, the four infrastructure layers and two squads are chained into a five-step standard workflow, together with copy-paste-ready prompt templates so that next time you collaborate with AI, you only need to speak in architectural terms instead of implementation details.",
+    m0_why: "Why does this architecture matter?",
+    m0_why_desc: "Most people using AI tools only see the surface layer — type a prompt, get a result — without realising that four hidden stages (isolation, enablement, connection, verification) determine whether the system stays under control, whether data leaks, and whether the conclusions actually hold up. Understanding this architecture lets you issue precise, safe, high-level instructions instead of relying on luck every time.",
+    m0_modules: [
+      { num:"01", title:"Four Infrastructure Layers", desc:"How container, package, plugin, connector and sandbox form a secured building." },
+      { num:"02", title:"Dual Agent Squads", desc:"How the engineering squad and analyst squad divide labour, each forming its own closed loop." },
+      { num:"03", title:"Five-Step Workflow", desc:"A complete intelligence pipeline from environment initialisation to terminal output." },
+      { num:"04", title:"Prompt Templates in Action", desc:"How to issue high-level instructions to AI using architectural semantics, not implementation detail." }
+    ],
+    m0_stats: [
+      { val:"4", label:"Infrastructure Layers" },
+      { val:"2", label:"Agent Squads" },
+      { val:"5", label:"Workflow Steps" },
+      { val:"1", label:"Decision Output System" }
+    ],
+    m0_start: "Start Learning →",
+
+    m1_nav: "1. Four Infrastructure Layers",
+    m1_title: "Core Design Principles & Four Infrastructure Layers",
+    m1_overview: "This module establishes the foundational metaphor of the whole knowledge base: imagine the AI system as a secured building, layered from inside out into an isolation layer, a capability layer, a communication layer, and a safety layer — corresponding to container, package/plugin, connector, and sandbox.",
+    m1_highlights: ["Container","Package","Plugin","Connector","Sandbox"],
+    m1_p1: "The container is the foundation of the whole architecture, playing the role of 'an independent house': it packages the application together with the underlying operating system, runtime, and dependencies into a lightweight isolated space. Its meaning lies in consistency — the same container produces the same result no matter which computer or cloud platform it runs on, which is the precondition for an AI model to run reliably.",
+    m1_p2: "Once the house is built, we need bricks and decoration — the capability layer played by packages and plugins. A package is a pre-written function library that cannot run on its own, such as pandas for data analysis or playwright for web scraping; a plugin attaches to a host program to extend or enhance a specific function, such as PDF unlocking or multimodal vision processing. Neither can operate independently, yet both are indispensable building materials that give the system its actual capabilities.",
+    m1_p3: "Next comes the communication layer's connector, playing the role of 'external plumbing and wiring': it does not execute any logic itself, but safely links the AI to the outside world — a company's SQL database, Google Drive, or an external news API — by carrying data back and forth between systems.",
+    m1_p4: "The most critical, and most commonly misunderstood, layer is the sandbox in the safety layer. Many people intuitively picture the sandbox as 'a fence around the outside of the house' meant to keep intruders out — but this metaphor points in the wrong direction. The risk the sandbox actually manages comes from the inside: code the AI itself generates and has not yet been verified. A more accurate metaphor is a dedicated blast-proof isolation chamber inside the house: AI-generated code is confined to this extremely low-privilege room to run, and even if the logic is flawed or behaves maliciously, the danger stays locked inside the chamber instead of spreading to the core system.",
+    m1_wrapup: "From the inside out, the four infrastructure layers are the isolation layer (container), the capability layer (package/plugin), the communication layer (connector), and the safety layer (sandbox). The container defines the boundary, packages and plugins provide capability, the connector handles external links, and the sandbox stops internal risk from spreading — each with a clear, indispensable role, together forming the stable and safe foundation an AI system runs on.",
+    m1_terms: [
+      { front:"Container", back:"An independent house: packages the app with its runtime into a consistent isolated space, so results are identical wherever it runs." },
+      { front:"Package", back:"The bricks of the house: pre-written function libraries that cannot run alone, such as pandas or playwright." },
+      { front:"Plugin", back:"The house's decoration: attaches to a host program to extend a specific function, such as PDF unlocking or multimodal vision." },
+      { front:"Connector", back:"External plumbing and wiring: carries data between systems and platforms without executing any logic itself." },
+      { front:"Sandbox", back:"A blast-proof chamber inside the house: contains internal risk (AI-generated code) so failures never reach the core system." },
+      { front:"Isolation Layer", back:"Formed by the container; defines the boundary within which the entire system operates." },
+      { front:"Capability Layer", back:"Formed by packages and plugins; gives the system its actual usable functions." },
+      { front:"Safety Layer", back:"Formed by the sandbox; contains internal risk rather than defending against external intrusion." }
+    ],
+    m1_q: [
+      { q:"Which metaphor most accurately describes the sandbox's function?", opts:["A fence around the outside of the house to keep intruders out","A blast-proof isolation chamber inside the house for risky experiments","Plumbing and wiring connecting the house to the outside","Bricks used to build the house"], ans:_A1, exp:"The sandbox is meant to contain internal risk — AI-generated, unverified code — not to defend against external intrusion, so the correct metaphor is an internal isolation chamber, not an outer fence." },
+      { q:"What do packages and plugins have in common?", opts:["Both can run independently without any host program","Both must attach to some environment or host program to operate","Both are bridges that carry data across systems","Both are isolated spaces that limit risky execution"], ans:_A1, exp:"A package is a library and a plugin attaches to a host program — neither runs independently; both are capability-layer building materials." },
+      { q:"What is the connector mainly responsible for in this architecture?", opts:["Executing complex business logic","Carrying data between systems or platforms","Confining code to a low-privilege environment","Providing decorative colour and layout"], ans:_A1, exp:"The connector itself executes no logic — it only carries and relays data, such as linking to a database or an external API." },
+      { q:"Why is the container called the 'foundation' of the whole architecture?", opts:["Because it beautifies the user interface","Because it packages the app and runtime into a consistent isolated space that everything else depends on","Because it performs dialectical business analysis","Because it is a collection of all packages and needs nothing else"], ans:_A1, exp:"The container provides a consistent, isolated execution environment that packages, plugins, connectors and sandboxes all depend on as their base boundary." },
+      { q:"What is the correct inside-out order of the four infrastructure layers?", opts:["Safety→Communication→Capability→Isolation","Isolation→Capability→Communication→Safety","Capability→Isolation→Safety→Communication","Communication→Safety→Isolation→Capability"], ans:_A1, exp:"From inside out: isolation layer (container) → capability layer (package/plugin) → communication layer (connector) → safety layer (sandbox)." }
+    ],
+
+    m2_nav: "2. Dual Agent Squads",
+    m2_title: "Agent Collaboration Architecture: The Dual-Squad System",
+    m2_overview: "This module explains how a high-level AI agent splits into two independent squads by purpose: an engineering squad that makes code run, and an analyst squad that makes conclusions hold up — each forming its own closed loop while sharing the same sandbox for execution and verification.",
+    m2_highlights: ["Engineer Subagent","Tester Subagent","Proponent Analyst","Critic Analyst","Synthesizer","Self-Healing Loop","Dialectical Reasoning"],
+    m2_p1: "When a self-iterating tool like Claude Code handles a broad task, it does not rely on a single role to do everything — behind the scenes it splits into different subagent teams working together. The first is the Engineering Squad, made up of an Engineer and a Tester: the Engineer understands the requirement and context and writes the corresponding automation script or analysis code; the Tester drops that code into the sandbox to run it, catches error messages, and feeds them back to the Engineer for correction. Together they form a self-healing loop of 'write code → error → self-correct → re-run', continuing until the program succeeds, entirely without disturbing the user.",
+    m2_p2: "But the Engineering Squad alone is not enough. Step 4 of the original workflow mentioned 'dialectical analysis between opposing viewpoints on simulated data' — which actually implies an entirely different kind of team: the Analyst Squad. This squad does not write code; instead it debates what the data actually means. A Proponent Analyst argues the positive case from technical feasibility and market opportunity; a Critic Analyst raises risks, schedule delays and business impact as counter-arguments; finally a Synthesizer consolidates both sides into a single actionable conclusion with an attached confidence level.",
+    m2_p3: "Notably, although the two squads serve different purposes, they share the same sandbox for execution and verification: the Engineering Squad verifies 'does the code run', while the Analyst Squad verifies 'does the conclusion hold up'. Keeping these two loops separately defined prevents the mistaken assumption that 'AI auto-generating code' and 'AI auto-making business judgments' are the same thing — the former is an engineering problem, the latter a judgment problem, each needing different roles and different acceptance criteria.",
+    m2_wrapup: "High-level AI agent collaboration is never a single role doing everything — it splits by purpose into two squads: the Engineering Squad (Engineer + Tester) forms a code self-healing loop; the Analyst Squad (Proponent + Critic + Synthesizer) forms a dialectical reasoning loop. Both share the sandbox as their verification ground, but with completely different acceptance criteria — precisely the role gap the original knowledge base overlooked and this revision fills.",
+    m2_terms: [
+      { front:"Engineer Subagent", back:"Engineering Squad member who understands the requirement and writes automation scripts or analysis code." },
+      { front:"Tester Subagent", back:"Engineering Squad member who runs code in the sandbox, catches errors, and feeds them back for correction." },
+      { front:"Self-Healing Loop", back:"Write code → error → correct → re-run, repeating until the program runs successfully — the engineering verification loop." },
+      { front:"Proponent Analyst", back:"Analyst Squad member who argues the positive case from technical feasibility and market opportunity." },
+      { front:"Critic Analyst", back:"Analyst Squad member who raises risk, schedule and business-impact counter-arguments." },
+      { front:"Synthesizer", back:"Analyst Squad member who consolidates both sides into one actionable conclusion with a confidence level." },
+      { front:"Dialectical Reasoning Loop", back:"Proponent argues → Critic challenges → Synthesizer consolidates — the analytical loop verifying whether a conclusion holds up." }
+    ],
+    m2_q: [
+      { q:"What exactly is the Engineering Squad's 'self-healing loop'?", opts:["Proponent argues → Critic challenges → Synthesizer consolidates","Write code → error → correct → re-run until it succeeds","Fetch news → compare with history → produce summary","Build container → load packages → connect to external data"], ans:_A1, exp:"The self-healing loop is the Engineer-Tester cycle of writing code, running it in the sandbox, hitting errors, and correcting — repeated until the program runs successfully." },
+      { q:"Why did the original knowledge base need an added 'Analyst Squad'?", opts:["Because the Engineer and Tester aren't efficient enough and need more staff","Because the original workflow described pro/con dialectical analysis without defining any corresponding role","Because the sandbox needs more people to maintain it","Because the connector needs shifts of people to ensure data fetching"], ans:_A1, exp:"Step 4 of the original workflow mentioned 'pro/con dialectical analysis' but only the Engineer and Tester had been defined — the Analyst Squad was added to fill that gap." },
+      { q:"What is the difference between the Proponent Analyst and the Critic Analyst?", opts:["The Proponent writes code and the Critic tests it","The Proponent argues technical feasibility and market opportunity, the Critic raises risk and business-impact concerns","The Proponent fetches data and the Critic stores it","There is no real difference, only the names differ"], ans:_A1, exp:"The Proponent focuses on the positive case, the Critic focuses on risk and challenge — their opposing views are what makes the dialectic effective." },
+      { q:"What do the Engineering Squad and Analyst Squad have in common?", opts:["Both squads write business reports","Both squads share the same sandbox for execution and verification, but with different acceptance criteria","Neither squad needs a sandbox","Their work is identical, just duplicated"], ans:_A1, exp:"Both squads use the sandbox as their verification ground: the Engineering Squad verifies whether code runs, the Analyst Squad verifies whether the conclusion holds up — different acceptance criteria." },
+      { q:"What is the Synthesizer's main responsibility?", opts:["Writing automation scripts","Running code in the sandbox and catching errors","Consolidating pro/con arguments into one actionable conclusion with a confidence level","Periodically fetching news and comparing it against the history base"], ans:_A2, exp:"The Synthesizer neither writes code nor debates — it consolidates both sides' views into the final actionable conclusion." }
+    ],
+
+    m3_nav: "3. Five-Step Workflow",
+    m3_title: "Standard Workflow SOP: Five Steps",
+    m3_overview: "This module chains the four infrastructure layers and two agent squads into a complete intelligence pipeline: environment initialisation, tool loading, secure data linking, sandbox verification and dialectic, and finally BI chart and decision output.",
+    m3_highlights: ["Environment Init","Tool & Skill Loading","Secure Data Linking","Sandbox Verification & Dialectic","Terminal Output"],
+    m3_p1: "Step one is environment initialisation, corresponding to the container: Claude Code launches an independent logical container using the current project directory as its boundary, keeping project data safely isolated from the local system. This step involves no agent squad at all — it is purely infrastructure setup.",
+    m3_p2: "Step two is tool and skill loading, corresponding to packages and plugins: the AI autonomously reviews the task requirement and installs packages for data analysis or web scraping, then loads plugins for specific formats (such as PDF unlocking or multimodal vision), giving later steps full operating capability. Step three is secure data linking, corresponding to the connector: through an API or filesystem connector, it periodically fetches the latest news on the configured topic and compares it against the accumulated history in the knowledge_base folder, producing the raw material for a daily briefing.",
+    m3_p3: "Step four is the core of the whole workflow, corresponding to the sandbox, and the stage where both agent squads truly appear: the Engineering Squad (Engineer + Tester) writes and debugs the scientific model used for evaluation; the Analyst Squad (Proponent + Critic + Synthesizer) then performs dialectical analysis on the old versus new data using the sandbox's simulation results. Even if the code logic is flawed, or the reasoning briefly drifts off course, the danger and error stay locked inside the sandbox and never reach the core system.",
+    m3_p4: "Step five is terminal output, and it deliberately corresponds to no infrastructure concept at all, because it is the ultimate purpose the first four layers jointly serve: once sandbox verification succeeds, the AI exports the data, automatically renders it as a web-based BI trend chart, and combines it with the Analyst Squad's dialectical conclusion to output a 'recommended decision action' and 'issues to keep tracking' at the terminal. Without this step's output, all the preceding isolation, enablement, connection and verification would be meaningless.",
+    m3_wrapup: "The five-step workflow runs: environment initialisation (container) → tool and skill loading (package/plugin) → secure data linking (connector) → sandbox verification and dialectic (both squads) → terminal output (BI chart and decision recommendation). The first four steps build infrastructure layer by layer; step five is the only step in the entire pipeline that corresponds to no infrastructure concept, yet is the one that actually creates value.",
+    m3_terms: [
+      { front:"Step 1 Environment Init", back:"Launches an independent container bounded by the project directory, isolating the local system — corresponds to the container." },
+      { front:"Step 2 Tool & Skill Loading", back:"Autonomously installs packages such as data-analysis and scraping libraries, loads format-specific plugins — corresponds to package/plugin." },
+      { front:"Step 3 Secure Data Linking", back:"Uses a connector to periodically fetch news and diff it against the history base, producing briefing material." },
+      { front:"Step 4 Sandbox Verification & Dialectic", back:"Engineering Squad runs the model, Analyst Squad debates — both inside the sandbox so errors never spill out." },
+      { front:"Step 5 Terminal Output", back:"Renders BI charts and outputs decision recommendations — the ultimate goal the first four steps serve, matching no infrastructure concept." }
+    ],
+    m3_q: [
+      { q:"In the five-step workflow, which step corresponds to no infrastructure concept?", opts:["Step 1 Environment Init","Step 3 Secure Data Linking","Step 5 Terminal Output","Step 2 Tool & Skill Loading"], ans:_A2, exp:"Step 5 is the ultimate output the first four infrastructure layers jointly serve — it does not itself correspond to container, package, connector or sandbox." },
+      { q:"Who executes Step 4 (sandbox verification and dialectic)?", opts:["Only the Engineer, alone","Only the connector handles it","The Engineering Squad and Analyst Squad execute together in the sandbox","Only the Synthesizer, alone"], ans:_A2, exp:"Step 4 is where both agent squads truly appear: the Engineering Squad runs the model while the Analyst Squad performs dialectical reasoning, both inside the sandbox." },
+      { q:"Which concept does Step 3 'Secure Data Linking' mainly use?", opts:["Container","Package","Connector","Sandbox"], ans:_A2, exp:"Step 3 fetches news via an API or filesystem connector and compares it against the history base, corresponding to the communication layer's connector." },
+      { q:"What is the correct order of the five-step workflow?", opts:["Connector→Container→Package→Sandbox→Output","Container→Package/Plugin→Connector→Sandbox→Output","Sandbox→Container→Connector→Package→Output","Output→Container→Package→Connector→Sandbox"], ans:_A1, exp:"The correct order is environment init (container) → tool loading (package/plugin) → data linking (connector) → sandbox verification and dialectic → terminal output." },
+      { q:"Why is step five described as 'the only value-creating output of the whole pipeline'?", opts:["Because it consumes the most computing resources","Because the first four steps are only infrastructure setup — without step five's output the whole pipeline has no practical meaning","Because it is the only step requiring human intervention","Because it needs no results from any prior step"], ans:_A1, exp:"The first four steps (container, package/plugin, connector, sandbox) are infrastructure and verification; only step five's BI chart and decision recommendation is the value the user actually needs." }
+    ],
+
+    m4_nav: "4. Prompt Templates in Action",
+    m4_title: "Applied Practice: Prompt Templates & Scenario Drills",
+    m4_overview: "This module explains how to instruct a high-level agent like Claude Code using 'architectural semantics' instead of 'implementation detail', and provides both a full and a quick prompt template you can apply to your own topic immediately.",
+    m4_highlights: ["Architectural Semantics","Vibe Coding","Full Template","Quick Template","Topic Substitution"],
+    m4_p1: "The most common mistake when using an agent like Claude Code is describing implementation details exhaustively — 'how exactly to write the scraper', 'which chart library to use' — which mistakenly hands back to the user decisions the AI should be making autonomously. The genuinely efficient approach is Vibe Coding: describe only the 'architectural semantics' and the 'output goal' you want, and let the two subagents — Engineer and Tester — handle package selection, code writing and debugging on their own.",
+    m4_p2: "The full prompt template explicitly marks which layer or which agent squad each sentence maps to: the first sentence corresponds to the connector, requesting news be fetched and compared against the history base; the second corresponds to the Analyst Squad, requesting pro/con dialectic and a consolidated conclusion; the third corresponds to the sandbox and the Engineering Squad, requesting all verification scripts run safely in the sandbox with self-correction; the fourth corresponds to terminal output, requesting a BI chart and decision recommendation. Splitting the prompt into four sentences, each mapped to one concept or role, greatly reduces the chance the AI misunderstands the requirement.",
+    m4_p3: "The quick template condenses the same four sentences into one, suitable once you are already familiar with this architectural semantics and want to trigger the same workflow quickly. Whether full or quick, the core technique is identical: simply replace the bracketed [topic] placeholder — there is no need to redesign the whole pipeline each time, because the container, packages, connector, sandbox, dual squads and five-step workflow are already a fixed architecture meant to be reused.",
+    m4_wrapup: "The key to instructing a high-level AI agent is not describing implementation detail, but expressing your desired output goal in the 'architectural semantics' of the four infrastructure layers and the dual agent squads. The full template maps each sentence to a concept or role; the quick template is the same logic condensed for fast triggering. Both share one principle: only the topic changes — the architecture itself is reusable.",
+    m4_terms: [
+      { front:"Architectural Semantics", back:"Describing a requirement using concepts like container, connector, sandbox and agent squads, instead of implementation detail." },
+      { front:"Vibe Coding", back:"A collaboration style where you describe only the goal and architectural semantics, leaving package choice, code writing and debugging to the AI." },
+      { front:"Full Template", back:"Four sentences, each mapped in turn to the connector, the Analyst Squad, the sandbox/Engineering Squad, and terminal output." },
+      { front:"Quick Template", back:"The same four sentences condensed into one, for quickly triggering the workflow once you know the architecture." },
+      { front:"Topic Substitution", back:"The only part of the template that changes — the architecture itself is reusable across topics." }
+    ],
+    m4_q: [
+      { q:"What is the most common mistake when using Claude Code?", opts:["Describing too much architectural semantics, confusing the AI","Describing implementation detail exhaustively, handing back to the user decisions the AI should make","Never issuing any instruction at all","Only ever using the quick template, never the full one"], ans:_A1, exp:"The common mistake is over-specifying implementation details (like which scraping library to use), which hands back to the user decisions the AI should autonomously make — against the spirit of Vibe Coding." },
+      { q:"Which concept and role does the third sentence of the full template mainly correspond to?", opts:["Connector and data fetching","Sandbox and the Engineering Squad","Container and environment initialisation","Plugin and format handling"], ans:_A1, exp:"The third sentence requests all verification and computation scripts run safely in the sandbox, self-corrected by the Engineer and Tester if they fail — corresponding to the sandbox and Engineering Squad." },
+      { q:"What is the relationship between the quick template and the full template?", opts:["The two use entirely different architectural principles","The quick template is the same logic condensed into one sentence from four","The quick template contains more detail than the full one","The quick template only suits programmers, the full one suits general users"], ans:_A1, exp:"The quick and full templates share the same architectural semantics — the quick one simply condenses four sentences into one, for use once you're already familiar with the architecture." },
+      { q:"When applying the template to a new topic, what actually needs to change?", opts:["The entire architectural semantics must be redesigned","Only the topic inside the brackets needs replacing — the architecture itself is reusable","All agent roles must be redefined","The sandbox's safety mechanism must be rewritten"], ans:_A1, exp:"The architecture (container, connector, sandbox, dual squads, five steps) is fixed and reusable — only the topic itself needs to change." }
+    ],
+
+    mlab_nav: "5. Interactive Lab", mlab_title: "Interactive Lab",
+    mlab_desc: "Four hands-on activities let you experience the ordering logic of the four infrastructure layers, the mapping between concepts and metaphors, how prompt templates are generated, and how the sandbox keeps risk contained inside.",
+    mlab_labs: [
+      { title:"Step Sequencing Challenge", desc:"Click the five workflow steps in the correct order to test how well you've mastered the pipeline." },
+      { title:"Concept-Metaphor Matcher", desc:"Match container, package, plugin, connector and sandbox to their correct metaphors to reinforce memory." },
+      { title:"Prompt Generator", desc:"Type your topic and instantly generate a ready-to-copy quick Claude Code prompt." },
+      { title:"Sandbox Risk Simulator", desc:"Use a slider to simulate code risk level and visually compare whether risk spills out with vs. without a sandbox." }
+    ],
+    mlab_order_title: "Step Sequencing Challenge", mlab_order_desc: "Click the steps below in the correct order to rebuild the full workflow.",
+    mlab_order_check: "Check Answer", mlab_order_reset: "Reset",
+    mlab_order_correct: "Perfect order! You've mastered the whole workflow.", mlab_order_wrong: "Not quite right — try again.",
+    mlab_match_title: "Concept-Metaphor Matcher", mlab_match_desc: "Click a concept on the left, then its matching metaphor on the right.",
+    mlab_match_reset: "Reset Matches", mlab_match_done: "All matched correctly!",
+    mlab_prompt_title: "Prompt Generator", mlab_prompt_ph: "Enter your topic, e.g. Solid-state battery commercialisation",
+    mlab_prompt_generate: "Generate Prompt", mlab_prompt_copy: "Copy Prompt", mlab_prompt_copied: "Copied!",
+    mlab_risk_title: "Sandbox Risk Simulator", mlab_risk_desc: "Drag the slider to simulate code risk level, and toggle sandbox protection to compare the outcome.",
+    mlab_risk_slider: "Code Risk Level", mlab_risk_toggle: "Enable Sandbox Protection",
+    mlab_risk_core: "Core System", mlab_risk_sandbox_label: "Sandbox Environment",
+    mlab_risk_safe: "Risk is locked inside the sandbox — core system safe", mlab_risk_danger: "No sandbox protection — risk has spilled into the core system!",
+
+    mres_nav: "6. Learning Resources", mres_title: "External Learning Resources",
+    mres_desc: "The resources below connect this knowledge base's concepts to real technical documentation and tooling ecosystems.",
+    mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration",
+
+    date: "Version 2026.07.20",
+    copyright: "For Educational Use Only",
+    architect_label: "Architect:",
+    architect_name: "Prof. Shihmin Lo",
+    architect_url: "https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo"
+  }
+};
+
+/* ---------- lab & resource datasets ---------- */
+const STEP_ORDER = [
+  { id:1, order:1, zh:'① 環境初始化（容器）', en:'① Environment Init (Container)' },
+  { id:2, order:2, zh:'② 工具與技能載入（套件/外掛）', en:'② Tool & Skill Loading (Package/Plugin)' },
+  { id:3, order:3, zh:'③ 安全資料牽線（連接器）', en:'③ Secure Data Linking (Connector)' },
+  { id:4, order:4, zh:'④ 沙盒驗證與辯證（雙小組）', en:'④ Sandbox Verification & Dialectic (Dual Squads)' },
+  { id:5, order:5, zh:'⑤ 終端輸出（BI 與決策）', en:'⑤ Terminal Output (BI & Decision)' }
+];
+const CONCEPT_MATCH = [
+  { id:'container', zh:'容器 Container', en:'Container', metaZh:'一棟獨立的房子', metaEn:'An independent house' },
+  { id:'package', zh:'套件 Package', en:'Package', metaZh:'蓋房子的磚頭', metaEn:'Bricks used to build the house' },
+  { id:'plugin', zh:'外掛 Plugin', en:'Plugin', metaZh:'房子的裝潢', metaEn:"The house's decoration" },
+  { id:'connector', zh:'連接器 Connector', en:'Connector', metaZh:'外接的水電管線', metaEn:'External plumbing and wiring' },
+  { id:'sandbox', zh:'沙盒 Sandbox', en:'Sandbox', metaZh:'房子內部的抗爆隔離艙', metaEn:'A blast-proof chamber inside the house' }
+];
+const RESOURCES = [
+  { group:'mres_group1', items: [
+    { label:'Docker — Get Started', url:'https://docs.docker.com/get-started/', desc:{ zh:'官方文件，理解容器化技術的基礎概念與操作。', en:'Official docs covering the fundamentals of containerization.' } },
+    { label:'OS-level Virtualization (Wikipedia)', url:'https://en.wikipedia.org/wiki/OS-level_virtualization', desc:{ zh:'維基百科條目，解釋容器背後的作業系統虛擬化原理。', en:'Wikipedia entry explaining the OS virtualization principles behind containers.' } },
+    { label:'Sandbox — Computer Security (Wikipedia)', url:'https://en.wikipedia.org/wiki/Sandbox_(computer_security)', desc:{ zh:'維基百科條目，說明沙盒作為安全機制的原理與應用。', en:'Wikipedia entry on the sandbox as a security mechanism.' } }
+  ]},
+  { group:'mres_group2', items: [
+    { label:'Claude Code — Overview', url:'https://docs.claude.com/en/docs/claude-code/overview', desc:{ zh:'Claude Code 官方文件，了解高階 Agent 如何協作完成任務。', en:'Official Claude Code docs on how high-level agents collaborate on tasks.' } },
+    { label:'Claude Code — Product Page', url:'https://claude.com/claude-code', desc:{ zh:'Claude Code 產品介紹頁面。', en:'Claude Code product overview page.' } }
+  ]}
+];
+
+/* ---------- shared components ---------- */
+const FlipCardDeck = ({ terms, t, moduleId, onCardRead }) => {
+  const [groupIdx, setGroupIdx] = useState(0);
+  const [flipped, setFlipped] = useState({});
+  const [readSet, setReadSet] = useState(new Set());
+  const [shownSet, setShownSet] = useState(new Set());
+  const [shuffledOrder] = useState(() => [...Array(terms.length).keys()].sort(() => Math.random() - 0.5));
+
+  const groupSize = 2;
+  const totalGroups = Math.ceil(terms.length / groupSize);
+  const startIdx = groupIdx * groupSize;
+  const currentCardIndices = shuffledOrder.slice(startIdx, startIdx + groupSize);
+
+  useEffect(() => {
+    const newShown = new Set(shownSet);
+    currentCardIndices.forEach(idx => newShown.add(idx));
+    if (newShown.size !== shownSet.size) setShownSet(newShown);
+  }, [groupIdx]);
+
+  const handleFlip = (origIdx) => {
+    setFlipped(f => ({ ...f, [origIdx]: !f[origIdx] }));
+    if (!readSet.has(origIdx)) {
+      const newRead = new Set(readSet); newRead.add(origIdx); setReadSet(newRead);
+      if (onCardRead) onCardRead(moduleId, newRead.size, shownSet.size, terms.length);
+    }
+  };
+
+  const statusText = t.flip_status.replace('{read}', readSet.size).replace('{shown}', shownSet.size).replace('{total}', terms.length);
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-lg font-bold uppercase tracking-wider text-slate-500 mb-2">{t.key_terms}</h3>
+      <p className="text-sm text-slate-400 mb-4">{statusText}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {currentCardIndices.map((origIdx) => {
+          const term = terms[origIdx];
+          return (
+            <div key={origIdx} className="perspective cursor-pointer h-36" onClick={() => handleFlip(origIdx)}>
+              <div className={`transform-style-3d relative w-full h-full transition-transform duration-500 ${flipped[origIdx] ? 'rotate-y-180' : ''}`}>
+                <div className="backface-hidden absolute inset-0 bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <p className="font-serif font-bold text-center text-[#004030] dark:text-[#D8C3A5]">{term.front}</p>
+                  <p className="text-xs text-slate-400 mt-2">{t.flip_prompt}</p>
+                </div>
+                <div className="backface-hidden rotate-y-180 absolute inset-0 bg-[#004030] dark:bg-slate-700 rounded-xl p-4 flex items-center justify-center">
+                  <p className="text-sm text-center text-[#D8C3A5] dark:text-slate-200 leading-relaxed">{term.back}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-4">
+        <button onClick={() => { setGroupIdx(0); setFlipped({}); }}
+          className="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+          {t.flip_retry}
+        </button>
+        <button onClick={() => groupIdx < totalGroups-1 && setGroupIdx(groupIdx+1)}
+          disabled={groupIdx >= totalGroups-1}
+          className="px-4 py-2 text-sm bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg disabled:opacity-40">
+          {t.flip_next}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ModuleQuiz = ({ questions, t, moduleId, onQuizSubmit, moduleName }) => {
+  const [selected, setSelected] = useState({});
+  const [submitted, setSubmitted] = useState({});
+  const [groupIdx, setGroupIdx] = useState(0);
+  const groupSize = 2;
+
+  const [quizIndices] = useState(() => [...Array(questions.length).keys()].sort(() => Math.random() - 0.5));
+  const totalGroups = Math.ceil(quizIndices.length / groupSize);
+
+  const [shuffledMaps] = useState(() => quizIndices.map(qIdx => {
+    const n = questions[qIdx].opts.length;
+    return [...Array(n).keys()].sort(() => Math.random() - 0.5);
+  }));
+
+  const totalAnswered = Object.keys(selected).length;
+  const computeCorrect = () => {
+    let c = 0;
+    quizIndices.forEach((qIdx, qi) => {
+      if (selected[qi] === undefined) return;
+      if (shuffledMaps[qi][selected[qi]] === _d(questions[qIdx].ans)) c++;
+    });
+    return c;
+  };
+  const statusText = t.quiz_status.replace('{correct}', computeCorrect()).replace('{answered}', totalAnswered).replace('{total}', quizIndices.length);
+
+  const currentStart = groupIdx * groupSize;
+  const currentIndices = quizIndices.slice(currentStart, currentStart + groupSize);
+
+  const handleGroupSubmit = () => {
+    const allDone = currentIndices.every((_, i) => selected[currentStart + i] !== undefined);
+    if (!allDone) return;
+    setSubmitted(s => ({ ...s, [groupIdx]: true }));
+    if (groupIdx === totalGroups - 1) {
+      const wrongQs = [];
+      let correct = 0;
+      quizIndices.forEach((qIdx, qi) => {
+        if (selected[qi] === undefined) return;
+        if (shuffledMaps[qi][selected[qi]] === _d(questions[qIdx].ans)) correct++;
+        else wrongQs.push(questions[qIdx].q);
+      });
+      onQuizSubmit(moduleId, correct, quizIndices.length, wrongQs, moduleName);
+    }
+  };
+
+  return (
+    <div className="mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+      <h3 className="text-lg font-bold font-serif text-[#004030] dark:text-[#D8C3A5] mb-2">{t.quiz_title}</h3>
+      <p className="text-sm text-slate-400 mb-6">{statusText}</p>
+      {currentIndices.map((qIdx, localI) => {
+        const qi = currentStart + localI;
+        const q = questions[qIdx];
+        const sMap = shuffledMaps[qi];
+        const isGrpSub = !!submitted[groupIdx];
+        return (
+          <div key={qIdx} className="mb-6">
+            <p className="font-bold mb-3">{qi+1}. {q.q}</p>
+            <div className="space-y-2">
+              {sMap.map((origIdx, dIdx) => {
+                const isCorrect = origIdx === _d(q.ans);
+                const isSel = selected[qi] === dIdx;
+                return (
+                  <button key={dIdx} onClick={() => !isGrpSub && setSelected(s => ({...s, [qi]: dIdx}))}
+                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all text-sm ${
+                      isGrpSub
+                        ? isCorrect ? 'bg-green-100 border-green-500 dark:bg-green-900/30'
+                          : isSel ? 'bg-red-100 border-red-400 dark:bg-red-900/30' : 'border-slate-200 dark:border-slate-700'
+                        : isSel ? 'border-[#004030] dark:border-[#D8C3A5] bg-[#004030]/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                    }`}>
+                    {q.opts[origIdx]}
+                  </button>
+                );
+              })}
+            </div>
+            {isGrpSub && (
+              <p className={`mt-2 text-sm italic ${shuffledMaps[qi][selected[qi]] === _d(q.ans) ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                {shuffledMaps[qi][selected[qi]] === _d(q.ans) ? `✓ ${t.correct}` : `✗ ${t.incorrect}`} — {t.explanation}：{q.exp}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      <div className="flex items-center gap-3">
+        {!submitted[groupIdx]
+          ? <button onClick={handleGroupSubmit}
+              disabled={!currentIndices.every((_,i) => selected[currentStart+i] !== undefined)}
+              className="px-6 py-2 bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg disabled:opacity-40">
+              {t.submit}
+            </button>
+          : <>
+              {groupIdx < totalGroups-1 && (
+                <button onClick={() => setGroupIdx(groupIdx+1)}
+                  className="px-6 py-2 bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg">
+                  {t.quiz_next}
+                </button>
+              )}
+              <button onClick={() => { setGroupIdx(0); setSelected({}); setSubmitted({}); }}
+                className="px-6 py-2 border border-[#004030] dark:border-[#D8C3A5] text-[#004030] dark:text-[#D8C3A5] font-bold rounded-lg">
+                {t.quiz_retry}
+              </button>
+            </>
+        }
+      </div>
+    </div>
+  );
+};
+
+const H2 = ({ children, icon, number }) => (
+  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-black text-[#004030] dark:text-[#D8C3A5] mb-6 flex items-center gap-3">
+    {icon && <span className="text-2xl">{icon}</span>}
+    {number !== undefined && <span>{number}.</span>}
+    <span>{children}</span>
+  </h2>
+);
+
+const LinkCard = ({label, url, desc}) => (
+  <a href={url} target="_blank" rel="noopener noreferrer"
+    className="block bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:border-[#004030] dark:hover:border-[#D8C3A5] hover:shadow-md transition-all group">
+    <span className="font-bold font-serif text-sm text-[#004030] dark:text-[#D8C3A5] group-hover:underline">{label}</span>
+    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">{desc}</p>
+  </a>
+);
+
+/* ---------- diagrams ---------- */
+const LayeredDiagram = ({lang}) => {
+  const labels = lang==='zh'
+    ? ['隔離層｜容器','能力層｜套件/外掛','通訊層｜連接器','安全層｜沙盒']
+    : ['Isolation | Container','Capability | Package/Plugin','Communication | Connector','Safety | Sandbox'];
+  return (
+    <svg viewBox="0 0 400 200" className="w-full max-w-md">
+      {labels.map((l,i) => (
+        <g key={i} transform={`translate(20, ${10+i*46})`}>
+          <rect width="360" height="36" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.35+i*0.15}/>
+          <text x="180" y="23" textAnchor="middle" fontSize="12" fill="currentColor">{l}</text>
+        </g>
+      ))}
+    </svg>
+  );
+};
+const SquadDiagram = ({lang}) => {
+  const a = lang==='zh' ? ['工程師','測試員'] : ['Engineer','Tester'];
+  const b = lang==='zh' ? ['正方分析師','反方分析師','綜合仲裁者'] : ['Proponent','Critic','Synthesizer'];
+  const labelA = lang==='zh' ? '技術實作小組' : 'Engineering Squad';
+  const labelB = lang==='zh' ? '決策分析小組' : 'Analyst Squad';
+  return (
+    <svg viewBox="0 0 400 180" className="w-full max-w-md">
+      <rect x="10" y="10" width="180" height="160" rx="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <text x="100" y="30" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">{labelA}</text>
+      {a.map((r,i) => <text key={i} x="100" y={60+i*22} textAnchor="middle" fontSize="11" fill="currentColor">{r}</text>)}
+      <rect x="210" y="10" width="180" height="160" rx="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <text x="300" y="30" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">{labelB}</text>
+      {b.map((r,i) => <text key={i} x="300" y={60+i*22} textAnchor="middle" fontSize="11" fill="currentColor">{r}</text>)}
+    </svg>
+  );
+};
+const PipelineDiagram = ({lang}) => {
+  const steps = lang==='zh' ? ['容器','套件/外掛','連接器','沙盒','輸出'] : ['Container','Package/Plugin','Connector','Sandbox','Output'];
+  return (
+    <svg viewBox="0 0 500 100" className="w-full max-w-xl">
+      {steps.map((s,i) => (
+        <g key={i}>
+          <rect x={10+i*98} y="30" width="80" height="40" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          <text x={50+i*98} y="55" textAnchor="middle" fontSize="10" fill="currentColor">{s}</text>
+          {i < steps.length-1 && <text x={95+i*98} y="55" textAnchor="middle" fontSize="14" fill="currentColor">→</text>}
+        </g>
+      ))}
+    </svg>
+  );
+};
+const TemplateDiagram = ({lang}) => {
+  const lines = lang==='zh'
+    ? ['① 連接器：抓新聞比對歷史庫','② 分析小組：正反辯證收斂結論','③ 沙盒＋技術小組：安全驗證與自我修正','④ 輸出：BI 圖表與決策建議']
+    : ['① Connector: fetch & diff news','② Analyst Squad: debate & conclude','③ Sandbox+Engineering: verify & self-correct','④ Output: BI chart & decision'];
+  return (
+    <svg viewBox="0 0 420 140" className="w-full max-w-md">
+      <rect x="5" y="5" width="410" height="130" rx="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      {lines.map((l,i) => <text key={i} x="20" y={35+i*28} fontSize="11" fill="currentColor">{l}</text>)}
+    </svg>
+  );
+};
+
+/* ---------- lab activities ---------- */
+const StepOrderLab = ({lang, t}) => {
+  const [pool] = useState(() => [...STEP_ORDER].sort(() => Math.random()-0.5));
+  const [seq, setSeq] = useState([]);
+  const [result, setResult] = useState(null);
+
+  const pick = (item) => { if (seq.find(s=>s.id===item.id)) return; setSeq(s => [...s, item]); };
+  const check = () => { if (seq.length !== STEP_ORDER.length) return; setResult(seq.every((s,i) => s.order === i+1)); };
+  const reset = () => { setSeq([]); setResult(null); };
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+      <h3 className="font-serif font-bold text-lg text-[#004030] dark:text-[#D8C3A5] mb-1">{t.mlab_order_title}</h3>
+      <p className="text-sm text-slate-500 mb-4">{t.mlab_order_desc}</p>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {pool.map(item => (
+          <button key={item.id} onClick={() => pick(item)} disabled={!!seq.find(s=>s.id===item.id)}
+            className="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-30 hover:border-[#004030] dark:hover:border-[#D8C3A5]">
+            {lang==='zh' ? item.zh : item.en}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-[2.5rem] flex flex-wrap gap-2 mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+        {seq.map((item,i) => <span key={item.id} className="px-3 py-1 text-sm bg-[#004030]/10 dark:bg-[#D8C3A5]/10 rounded-full">{i+1}. {lang==='zh'?item.zh:item.en}</span>)}
+      </div>
+      {result !== null && (
+        <p className={`text-sm mb-3 ${result ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
+          {result ? t.mlab_order_correct : t.mlab_order_wrong}
+        </p>
+      )}
+      <div className="flex gap-3">
+        <button onClick={check} disabled={seq.length!==STEP_ORDER.length} className="px-4 py-2 bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg disabled:opacity-40">{t.mlab_order_check}</button>
+        <button onClick={reset} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg">{t.mlab_order_reset}</button>
+      </div>
+    </div>
+  );
+};
+
+const ConceptMatchLab = ({lang, t}) => {
+  const [rightOrder] = useState(() => [...CONCEPT_MATCH].sort(() => Math.random()-0.5));
+  const [selLeft, setSelLeft] = useState(null);
+  const [matched, setMatched] = useState({});
+
+  const clickRight = (id) => {
+    if (!selLeft) return;
+    if (selLeft === id) setMatched(m => ({...m, [id]: true}));
+    setSelLeft(null);
+  };
+  const reset = () => { setMatched({}); setSelLeft(null); };
+  const allDone = Object.keys(matched).length === CONCEPT_MATCH.length;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+      <h3 className="font-serif font-bold text-lg text-[#004030] dark:text-[#D8C3A5] mb-1">{t.mlab_match_title}</h3>
+      <p className="text-sm text-slate-500 mb-4">{t.mlab_match_desc}</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          {CONCEPT_MATCH.map(c => (
+            <button key={c.id} onClick={() => !matched[c.id] && setSelLeft(c.id)}
+              className={`w-full text-left px-3 py-2 text-sm rounded-lg border ${matched[c.id] ? 'bg-green-100 dark:bg-green-900/30 border-green-400 opacity-60' : selLeft===c.id ? 'border-[#004030] dark:border-[#D8C3A5]' : 'border-slate-300 dark:border-slate-600'}`}>
+              {lang==='zh'?c.zh:c.en}
+            </button>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {rightOrder.map(c => (
+            <button key={c.id} onClick={() => clickRight(c.id)} disabled={!!matched[c.id]}
+              className={`w-full text-left px-3 py-2 text-sm rounded-lg border ${matched[c.id] ? 'bg-green-100 dark:bg-green-900/30 border-green-400 opacity-60' : 'border-slate-300 dark:border-slate-600'}`}>
+              {lang==='zh'?c.metaZh:c.metaEn}
+            </button>
+          ))}
+        </div>
+      </div>
+      {allDone && <p className="text-sm text-green-600 dark:text-green-400 mt-4">{t.mlab_match_done}</p>}
+      <button onClick={reset} className="mt-4 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm">{t.mlab_match_reset}</button>
+    </div>
+  );
+};
+
+const PromptGeneratorLab = ({lang, t}) => {
+  const [topic, setTopic] = useState('');
+  const [generated, setGenerated] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const generate = () => {
+    const topicText = topic.trim() || (lang==='zh' ? '固態電池技術商用化' : 'Solid-state battery commercialisation');
+    const template = lang==='zh'
+      ? `針對 ${topicText}，在容器內建立每日晨報系統：連接器抓新聞比對歷史庫 → 分析小組正反辯證 → 沙盒驗證程式碼 → 輸出 BI 圖表與決策建議。`
+      : `For ${topicText}, build a daily briefing system inside the container: connector fetches news and diffs against history → Analyst Squad debates pro/con → sandbox verifies code → output BI chart and decision recommendations.`;
+    setGenerated(template);
+    setCopied(false);
+  };
+
+  const copy = () => {
+    if (!generated) return;
+    try { navigator.clipboard.writeText(generated); setCopied(true); setTimeout(()=>setCopied(false), 2000); } catch(e) {}
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+      <h3 className="font-serif font-bold text-lg text-[#004030] dark:text-[#D8C3A5] mb-1">{t.mlab_prompt_title}</h3>
+      <input value={topic} onChange={e=>setTopic(e.target.value.slice(0,80))} placeholder={t.mlab_prompt_ph}
+        className="w-full px-3 py-2 mt-3 mb-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm" />
+      <button onClick={generate} className="px-4 py-2 bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg text-sm">{t.mlab_prompt_generate}</button>
+      {generated && (
+        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg text-sm leading-relaxed">
+          <p>{generated}</p>
+          <button onClick={copy} className="mt-3 px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg">
+            {copied ? t.mlab_prompt_copied : t.mlab_prompt_copy}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SandboxRiskLab = ({t}) => {
+  const [risk, setRisk] = useState(50);
+  const [sandboxOn, setSandboxOn] = useState(true);
+  const color = risk < 34 ? '#22c55e' : risk < 67 ? '#eab308' : '#ef4444';
+  const coreColor = sandboxOn ? '#22c55e' : color;
+  const coreMsg = sandboxOn ? t.mlab_risk_safe : t.mlab_risk_danger;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+      <h3 className="font-serif font-bold text-lg text-[#004030] dark:text-[#D8C3A5] mb-1">{t.mlab_risk_title}</h3>
+      <p className="text-sm text-slate-500 mb-4">{t.mlab_risk_desc}</p>
+      <label className="text-sm block mb-2">{t.mlab_risk_slider}: {risk}</label>
+      <input type="range" min="0" max="100" value={risk} onChange={e=>setRisk(Number(e.target.value))} className="w-full mb-4" />
+      <button onClick={()=>setSandboxOn(!sandboxOn)} className={`mb-4 px-4 py-2 rounded-lg text-sm font-bold ${sandboxOn ? 'bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030]' : 'border border-slate-300 dark:border-slate-600'}`}>
+        {t.mlab_risk_toggle}: {sandboxOn ? 'ON' : 'OFF'}
+      </button>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl p-4 border-2 text-center" style={{borderColor: color}}>
+          <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">{t.mlab_risk_sandbox_label}</p>
+          <div className="h-16 rounded-lg flex items-center justify-center font-bold text-white" style={{backgroundColor: color}}>{risk}%</div>
+        </div>
+        <div className="rounded-xl p-4 border-2 text-center" style={{borderColor: coreColor}}>
+          <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">{t.mlab_risk_core}</p>
+          <div className="h-16 rounded-lg flex items-center justify-center font-bold text-white" style={{backgroundColor: coreColor}}>{sandboxOn ? '0%' : risk+'%'}</div>
+        </div>
+      </div>
+      <p className={`text-sm mt-4 ${sandboxOn ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>{coreMsg}</p>
+    </div>
+  );
+};
+
+/* ---------- App ---------- */
+function App() {
+  const LS_KEY = 'CAIW_SPA_analytics';
+  const LS_STU = 'CAIW_SPA_student';
+  const loadLS = (key, fb) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch { return fb; } };
+
+  const [lang, setLang] = useState('en');
+  const [isDark, setIsDark] = useState(true);
+  const [module, setModule] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [ttsState, setTtsState] = useState('idle');
+  const [studentInfo, setStudentInfo] = useState(() => loadLS(LS_STU, { group:'', dept:'', id:'', nameEn:'', nameZh:'' }));
+  const [analytics, setAnalytics] = useState(() => loadLS(LS_KEY, {
+    time: Array(TOTAL).fill(0), clicks: Array(TOTAL).fill(0),
+    quizCorrect: Array(TOTAL).fill(0), quizTotal: Array(TOTAL).fill(0),
+    cardsRead: Array(TOTAL).fill(0), cardsTotal: Array(TOTAL).fill(0),
+    wrongTopics: {}
+  }));
+  const contentRef = useRef(null);
+  const menuRef = useRef(null);
+  const t = dict[lang];
+
+  useEffect(() => { document.documentElement.classList.toggle('dark', isDark); }, [isDark]);
+  useEffect(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(analytics)); } catch {} }, [analytics]);
+  useEffect(() => { try { localStorage.setItem(LS_STU, JSON.stringify(studentInfo)); } catch {} }, [studentInfo]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAnalytics(a => { const time = [...a.time]; time[module] = (time[module]||0) + 1; return {...a, time}; });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [module]);
+
+  useEffect(() => {
+    const handleClick = () => setAnalytics(a => { const clicks = [...a.clicks]; clicks[module] = (clicks[module]||0) + 1; return {...a, clicks}; });
+    const node = contentRef.current;
+    if (node) node.addEventListener('click', handleClick);
+    return () => { if (node) node.removeEventListener('click', handleClick); };
+  }, [module]);
+
+  useEffect(() => {
+    const handleOutside = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleQuizSubmit = (mid, correct, total, wrongQs) => {
+    setAnalytics(a => {
+      const qc = [...a.quizCorrect], qt = [...a.quizTotal];
+      qc[mid] = correct; qt[mid] = total;
+      const wt = { ...a.wrongTopics }; wt[mid] = wrongQs || [];
+      return { ...a, quizCorrect: qc, quizTotal: qt, wrongTopics: wt };
+    });
+  };
+  const handleCardRead = (mid, readCount, shownCount, totalCount) => {
+    setAnalytics(a => {
+      const cr = [...a.cardsRead], ct = [...a.cardsTotal];
+      cr[mid] = readCount; ct[mid] = totalCount;
+      return { ...a, cardsRead: cr, cardsTotal: ct };
+    });
+  };
+
+  const modulesList = [
+    { id:0, icon:'📋', title:t.m0_nav },
+    { id:1, icon:'🧱', title:t.m1_nav },
+    { id:2, icon:'🤖', title:t.m2_nav },
+    { id:3, icon:'🔄', title:t.m3_nav },
+    { id:4, icon:'⚡', title:t.m4_nav },
+    { id:IDX_LAB, icon:'🧪', title:t.mlab_nav },
+    { id:IDX_RES, icon:'🌐', title:t.mres_nav },
+    { id:IDX_ANA, icon:'📊', title:t.analytics_nav }
+  ];
+
+  const handleTTS = (action) => {
+    if (!('speechSynthesis' in window)) return;
+    if (action === 'stop') { speechSynthesis.cancel(); setTtsState('idle'); return; }
+    if (action === 'pause') { speechSynthesis.pause(); setTtsState('paused'); return; }
+    if (action === 'play') {
+      if (ttsState === 'paused') { speechSynthesis.resume(); setTtsState('playing'); return; }
+      speechSynthesis.cancel();
+      const sep = lang === 'zh' ? '。 ' : '. ';
+      let texts = [];
+      if (module === 0) {
+        texts = [t.m0_title, t.m0_intro, t.m0_why, t.m0_why_desc,
+          ...(t.m0_stats||[]).map(s=>`${s.label}: ${s.val}`),
+          ...(t.m0_modules||[]).map(m=>`${m.title}. ${m.desc}`)];
+      } else if (module >= 1 && module <= NUM_LEARN) {
+        const mk = `m${module}`;
+        texts = [t[`${mk}_title`], t[`${mk}_overview`], ...(t[`${mk}_highlights`]||[]),
+          t[`${mk}_p1`], t[`${mk}_p2`], t[`${mk}_p3`], t[`${mk}_p4`],
+          t[`${mk}_wrapup`],
+          ...(t[`${mk}_terms`]||[]).flatMap(tm=>[tm.front, tm.back])];
+      } else if (module === IDX_LAB) {
+        texts = [t.mlab_title, t.mlab_desc, ...(t.mlab_labs||[]).map(l=>`${l.title}. ${l.desc||''}`)];
+      } else if (module === IDX_RES) {
+        texts = [t.mres_title, t.mres_desc];
+      } else if (module === IDX_ANA) {
+        const tc = analytics.quizCorrect.reduce((a,b)=>a+b,0);
+        const ta = analytics.quizTotal.reduce((a,b)=>a+b,0);
+        const oa = ta>0 ? Math.round(tc/ta*100) : 0;
+        const wk = [];
+        for (let i=1;i<=NUM_LEARN;i++) {
+          if (analytics.quizTotal[i]>0) {
+            const acc = Math.round(analytics.quizCorrect[i]/analytics.quizTotal[i]*100);
+            if (acc<75) wk.push({name:t[`m${i}_title`],acc});
+          }
+        }
+        wk.sort((a,b)=>a.acc-b.acc);
+        texts = [t.analytics_title, t.analytics_desc,
+          `${t.analytics_total_time}: ${analytics.time.reduce((a,b)=>a+b,0)}${t.analytics_sec}`,
+          `${t.analytics_total_clicks}: ${analytics.clicks.reduce((a,b)=>a+b,0)}${t.analytics_times}`,
+          `${t.analytics_overall_acc}: ${oa}%`];
+        if (wk.length) { texts.push(t.analytics_wp_tts_intro); wk.forEach(w=>texts.push(t.analytics_wp_tts_module.replace('{name}',w.name).replace('{acc}',w.acc))); }
+        else if (ta>0) texts.push(t.analytics_wp_tts_allpass);
+      }
+      texts = texts.filter(Boolean);
+      const utt = new SpeechSynthesisUtterance(texts.join(sep));
+      utt.rate = 0.95;
+      const voices = speechSynthesis.getVoices();
+      if (lang==='zh') {
+        const v = voices.find(v=>v.lang==='zh-TW'&&v.name.includes('Yating'))||voices.find(v=>v.lang==='zh-TW')||voices.find(v=>v.lang.startsWith('zh'));
+        if (v) utt.voice = v; utt.lang = 'zh-TW';
+      } else {
+        const v = voices.find(v=>v.lang==='en-GB'&&(v.name.includes('Male')||v.name.includes('Daniel')))||voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'));
+        if (v) utt.voice = v; utt.lang = 'en-GB';
+      }
+      utt.onend = () => setTtsState('idle');
+      utt.onerror = () => setTtsState('idle');
+      speechSynthesis.speak(utt);
+      setTtsState('playing');
+    }
+  };
+
+  const goTo = (m) => { setModule(m); window.scrollTo({top:0,behavior:'smooth'}); };
+
+  const exportCSV = () => {
+    const rows = [['Module','Time(s)','Clicks','Correct','Total','Accuracy%','Cards Read','Cards Total','Wrong Questions']];
+    const titleFor = (i) => i===0?t.m0_title : i<=NUM_LEARN?t[`m${i}_title`] : i===IDX_LAB?t.mlab_title : i===IDX_RES?t.mres_title : t.analytics_title;
+    for (let i=0;i<TOTAL;i++) {
+      const acc = analytics.quizTotal[i]>0 ? Math.round(analytics.quizCorrect[i]/analytics.quizTotal[i]*100) : '';
+      const wrong = (analytics.wrongTopics[i]||[]).join(' | ').replace(/"/g,"'");
+      rows.push([titleFor(i), analytics.time[i]||0, analytics.clicks[i]||0, analytics.quizCorrect[i]||0, analytics.quizTotal[i]||0, acc, analytics.cardsRead[i]||0, analytics.cardsTotal[i]||0, `"${wrong}"`]);
+    }
+    const meta = [['Group',studentInfo.group],['Dept',studentInfo.dept],['ID',studentInfo.id],['Name(EN)',studentInfo.nameEn],['Name(ZH)',studentInfo.nameZh],[]];
+    const csv = [...meta, ...rows].map(r=>r.join(',')).join('\n');
+    const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dict.zh.brand}${dict.zh.title}_${studentInfo.nameEn}_${studentInfo.nameZh}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearHistory = () => {
+    if (!window.confirm(t.analytics_wp_clear_confirm)) return;
+    setAnalytics({ time:Array(TOTAL).fill(0), clicks:Array(TOTAL).fill(0), quizCorrect:Array(TOTAL).fill(0), quizTotal:Array(TOTAL).fill(0), cardsRead:Array(TOTAL).fill(0), cardsTotal:Array(TOTAL).fill(0), wrongTopics:{} });
+    try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  };
+
+  const canExport = studentInfo.group && studentInfo.dept && studentInfo.id && studentInfo.nameEn && studentInfo.nameZh;
+
+  return (
+    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#121212] text-slate-800 dark:text-slate-200 selection:bg-[#004030] selection:text-white dark:selection:bg-[#D8C3A5] dark:selection:text-[#004030] flex flex-col overflow-x-hidden">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[#004030] dark:bg-slate-900 text-white z-50 shadow-lg border-b border-[#D8C3A5]/30">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+            <div className="relative" ref={menuRef}>
+              <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 hover:bg-white/10 rounded-lg"><IconMenu/></button>
+              {menuOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-[100] text-slate-800 dark:text-slate-200">
+                  {modulesList.map(m => (
+                    <button key={m.id} onClick={() => { setMenuOpen(false); goTo(m.id); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 text-left ${module===m.id ? 'font-bold text-[#004030] dark:text-[#D8C3A5]' : ''}`}>
+                      <span>{m.icon}</span><span className="truncate">{m.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={() => goTo(0)} className="p-2 hover:bg-white/10 rounded-lg" title={t.nav_home}><IconHome size={18}/></button>
+            <button onClick={() => window.scrollTo({top:0,behavior:'smooth'})} className="flex items-center gap-2 min-w-0">
+              <span className="font-serif font-black text-[#D8C3A5] text-lg tracking-widest">{t.brand}</span>
+              <span className="hidden sm:inline font-serif font-bold text-sm md:text-base truncate max-w-[40vw]">{t.title}</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <button onClick={() => handleTTS(ttsState==='playing' ? 'pause' : 'play')} className="p-2 hover:bg-white/10 rounded-lg" title={t.audio_read}>
+              {ttsState==='playing' ? <IconPause size={18}/> : <IconPlay size={18}/>}
+            </button>
+            <button onClick={() => handleTTS('stop')} className="p-2 hover:bg-white/10 rounded-lg"><IconSquare size={18}/></button>
+            <button onClick={() => setLang(lang==='zh'?'en':'zh')} className="p-2 hover:bg-white/10 rounded-lg text-sm font-bold flex items-center gap-1">
+              <IconGlobe size={16}/>{lang==='zh'?'EN':'中'}
+            </button>
+            <button onClick={() => setIsDark(!isDark)} className="p-2 hover:bg-white/10 rounded-lg">{isDark ? <IconSun size={18}/> : <IconMoon size={18}/>}</button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full pt-16">
+        <aside className="hidden md:block w-64 shrink-0 border-r border-slate-200 dark:border-slate-700 p-4">
+          {modulesList.map(m => (
+            <button key={m.id} onClick={() => goTo(m.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mb-1 text-left ${module===m.id ? 'bg-[#004030]/10 dark:bg-[#D8C3A5]/10 text-[#004030] dark:text-[#D8C3A5] font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+              <span>{m.icon}</span><span className="truncate">{m.title}</span>
+            </button>
+          ))}
+        </aside>
+
+        <main ref={contentRef} className="flex-1 min-w-0 p-4 md:p-8">
+
+          {module === 0 && (
+            <div className="animate-fade-in">
+              <div className="rounded-2xl bg-gradient-to-br from-[#004030] to-[#00291f] dark:from-slate-800 dark:to-slate-900 text-white p-8 md:p-12 mb-8">
+                <p className="text-[#D8C3A5] text-sm font-bold uppercase tracking-widest mb-3">{t.brand} · {t.subtitle}</p>
+                <h1 className="font-serif font-black text-3xl md:text-5xl mb-4">{t.m0_title}</h1>
+                <p className="text-white/80 max-w-2xl leading-relaxed mb-6">{t.m0_intro}</p>
+                <button onClick={() => goTo(1)} className="px-6 py-3 bg-[#D8C3A5] text-[#004030] font-bold rounded-lg hover:bg-white transition-colors">
+                  {t.m0_start}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                {t.m0_stats.map((s,i) => (
+                  <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-5 text-center border border-slate-200 dark:border-slate-700">
+                    <p className="text-3xl font-black font-serif text-[#004030] dark:text-[#D8C3A5]">{s.val}</p>
+                    <p className="text-xs text-slate-500 mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-6 mb-10">
+                <h2 className="font-serif font-bold text-xl mb-2">{t.m0_why}</h2>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{t.m0_why_desc}</p>
+              </div>
+              <div className="space-y-3">
+                {t.m0_modules.map((m,i) => (
+                  <button key={i} onClick={() => goTo(i+1)}
+                    className="w-full flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#004030] dark:hover:border-[#D8C3A5] transition-all text-left">
+                    <span className="font-serif font-black text-2xl text-[#D8C3A5]">{m.num}</span>
+                    <div className="flex-1">
+                      <p className="font-bold">{m.title}</p>
+                      <p className="text-sm text-slate-500">{m.desc}</p>
+                    </div>
+                    <IconChevronRight/>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {module >= 1 && module <= NUM_LEARN && (
+            <div className="space-y-6 text-lg leading-relaxed text-slate-700 dark:text-slate-300 animate-fade-in">
+              <H2 icon={modulesList[module].icon} number={module}>{t[`m${module}_title`]}</H2>
+              <div className="bg-[#004030]/5 dark:bg-[#D8C3A5]/5 rounded-xl p-5 border-l-4 border-[#D8C3A5]">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">{t.overview_label}</h3>
+                <p>{t[`m${module}_overview`]}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">{t.highlights_label}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {t[`m${module}_highlights`].map((h,i) => (
+                    <span key={i} className="px-3 py-1 bg-[#004030]/10 dark:bg-[#D8C3A5]/10 text-[#004030] dark:text-[#D8C3A5] rounded-full text-sm font-medium">{h}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">{t.deep_dive_label}</h3>
+                <p>{t[`m${module}_p1`]}</p>
+                <p className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg italic font-serif">{t[`m${module}_p2`]}</p>
+                <p>{t[`m${module}_p3`]}</p>
+                {t[`m${module}_p4`] && <p>{t[`m${module}_p4`]}</p>}
+              </div>
+              <div className="flex justify-center text-[#004030] dark:text-[#D8C3A5] py-4">
+                {module===1 && <LayeredDiagram lang={lang}/>}
+                {module===2 && <SquadDiagram lang={lang}/>}
+                {module===3 && <PipelineDiagram lang={lang}/>}
+                {module===4 && <TemplateDiagram lang={lang}/>}
+              </div>
+              <FlipCardDeck key={`cards-${module}`} terms={t[`m${module}_terms`]} t={t} moduleId={module} onCardRead={handleCardRead} />
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">{t.wrapup_label}</h3>
+                <p className="italic">{t[`m${module}_wrapup`]}</p>
+              </div>
+              <ModuleQuiz key={`quiz-${module}`} questions={t[`m${module}_q`]} t={t} moduleId={module} onQuizSubmit={handleQuizSubmit} moduleName={t[`m${module}_title`]} />
+            </div>
+          )}
+
+          {module === IDX_LAB && (
+            <div className="space-y-6 animate-fade-in">
+              <H2 icon="🧪" number={IDX_LAB}>{t.mlab_title}</H2>
+              <p className="text-lg text-slate-600 dark:text-slate-300">{t.mlab_desc}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {t.mlab_labs.map((l,i) => (
+                  <div key={i} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                    <p className="font-bold text-[#004030] dark:text-[#D8C3A5]">{l.title}</p>
+                    <p className="text-sm text-slate-500 mt-1">{l.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <StepOrderLab lang={lang} t={t} />
+              <ConceptMatchLab lang={lang} t={t} />
+              <PromptGeneratorLab lang={lang} t={t} />
+              <SandboxRiskLab t={t} />
+            </div>
+          )}
+
+          {module === IDX_RES && (
+            <div className="space-y-8 animate-fade-in">
+              <H2 icon="🌐" number={IDX_RES}>{t.mres_title}</H2>
+              <p className="text-lg text-slate-600 dark:text-slate-300">{t.mres_desc}</p>
+              {RESOURCES.map((g,i) => (
+                <div key={i}>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">{t[g.group]}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {g.items.map((it,j) => <LinkCard key={j} label={it.label} url={it.url} desc={it.desc[lang]} />)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {module === IDX_ANA && (() => {
+            const totalTime = analytics.time.reduce((a,b)=>a+b,0);
+            const totalClicks = analytics.clicks.reduce((a,b)=>a+b,0);
+            const totalCorrect = analytics.quizCorrect.reduce((a,b)=>a+b,0);
+            const totalQuiz = analytics.quizTotal.reduce((a,b)=>a+b,0);
+            const overallAcc = totalQuiz>0 ? Math.round(totalCorrect/totalQuiz*100) : 0;
+            const totalCardsRead = analytics.cardsRead.reduce((a,b)=>a+b,0);
+            const totalCardsTotal = analytics.cardsTotal.reduce((a,b)=>a+b,0);
+            const cardUsage = totalCardsTotal>0 ? Math.round(totalCardsRead/totalCardsTotal*100) : 0;
+            const weakPoints = [];
+            for (let i=1;i<=NUM_LEARN;i++) {
+              if (analytics.quizTotal[i]>0) {
+                const acc = Math.round(analytics.quizCorrect[i]/analytics.quizTotal[i]*100);
+                if (acc<75) weakPoints.push({ id:i, name:t[`m${i}_title`], acc });
+              }
+            }
+            weakPoints.sort((a,b)=>a.acc-b.acc);
+
+            return (
+              <div className="space-y-8 animate-fade-in">
+                <H2 icon="📊" number={IDX_ANA}>{t.analytics_title}</H2>
+                <p className="text-lg text-slate-600 dark:text-slate-300">{t.analytics_desc}</p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-5 text-center border border-slate-200 dark:border-slate-700">
+                    <p className="text-2xl font-black font-serif text-[#004030] dark:text-[#D8C3A5]">{totalTime}{t.analytics_sec}</p>
+                    <p className="text-xs text-slate-500 mt-1">{t.analytics_total_time}</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-5 text-center border border-slate-200 dark:border-slate-700">
+                    <p className="text-2xl font-black font-serif text-[#004030] dark:text-[#D8C3A5]">{totalClicks}{t.analytics_times}</p>
+                    <p className="text-xs text-slate-500 mt-1">{t.analytics_total_clicks}</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-5 text-center border border-slate-200 dark:border-slate-700">
+                    <p className="text-2xl font-black font-serif text-[#004030] dark:text-[#D8C3A5]">{overallAcc}%</p>
+                    <p className="text-xs text-slate-500 mt-1">{t.analytics_overall_acc}</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-5 text-center border border-slate-200 dark:border-slate-700">
+                    <p className="text-2xl font-black font-serif text-[#004030] dark:text-[#D8C3A5]">{cardUsage}%</p>
+                    <p className="text-xs text-slate-500 mt-1">{t.analytics_card_usage}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-serif font-bold text-lg mb-3">{t.analytics_progress_title}</h3>
+                  <div className="space-y-2">
+                    {Array.from({length:NUM_LEARN}).map((_,idx) => {
+                      const i = idx+1;
+                      const visited = (analytics.cardsTotal[i]||0) > 0 || (analytics.quizTotal[i]||0) > 0 || (analytics.time[i]||0) > 0;
+                      const quizDone = (analytics.quizTotal[i]||0) > 0;
+                      const pct = visited ? (quizDone ? 100 : 50) : 0;
+                      return (
+                        <button key={i} onClick={() => goTo(i)}
+                          className="w-full text-left flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                          <span className="text-sm w-40 truncate">{t[`m${i}_title`]}</span>
+                          <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#004030] dark:bg-[#D8C3A5]" style={{width: pct+'%'}}/>
+                          </div>
+                          <span className="text-xs text-slate-400 w-24 text-right shrink-0">
+                            {quizDone ? t.analytics_progress_quiz_done : visited ? t.analytics_progress_visited : t.analytics_progress_not_visited}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6">
+                  <h3 className="font-serif font-bold text-lg mb-3">{t.analytics_wp_title}</h3>
+                  {weakPoints.length > 0 ? (
+                    <div className="space-y-3">
+                      {weakPoints.map(w => (
+                        <div key={w.id} className="p-3 bg-white dark:bg-slate-800 rounded-lg">
+                          <p className="text-sm font-bold">{w.name} — {w.acc}%</p>
+                          {(analytics.wrongTopics[w.id]||[]).length > 0 && (
+                            <p className="text-xs text-slate-500 mt-1">{t.analytics_wp_incorrect} {(analytics.wrongTopics[w.id]||[]).join('; ')}</p>
+                          )}
+                          <button onClick={() => goTo(w.id)} className="text-xs text-[#004030] dark:text-[#D8C3A5] underline mt-1">{t.analytics_wp_goto}</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : totalQuiz > 0 ? (
+                    <p className="text-sm text-green-600 dark:text-green-400">{t.analytics_wp_allpass}</p>
+                  ) : (
+                    <p className="text-sm text-slate-400">{t.analytics_no_data}</p>
+                  )}
+                  <p className="text-xs text-slate-400 mt-4">💾 {t.analytics_wp_saved}</p>
+                  <button onClick={clearHistory} className="mt-3 px-4 py-2 bg-red-500 text-white text-sm font-bold rounded-lg">{t.analytics_wp_clear}</button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-300 dark:border-slate-600 text-left">
+                        <th className="py-2 pr-4">{t.analytics_module}</th>
+                        <th className="py-2 pr-4">{t.analytics_time}</th>
+                        <th className="py-2 pr-4">{t.analytics_clicks}</th>
+                        <th className="py-2 pr-4">{t.analytics_correct_ans_total}</th>
+                        <th className="py-2 pr-4">{t.analytics_cards_read_total}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({length:NUM_LEARN}).map((_,idx) => {
+                        const i = idx+1;
+                        return (
+                          <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
+                            <td className="py-2 pr-4">{t[`m${i}_title`]}</td>
+                            <td className="py-2 pr-4">{analytics.time[i]||0}{t.analytics_sec}</td>
+                            <td className="py-2 pr-4">{analytics.clicks[i]||0}</td>
+                            <td className="py-2 pr-4">{analytics.quizTotal[i] ? `${analytics.quizCorrect[i]}/${analytics.quizTotal[i]}` : t.analytics_no_data}</td>
+                            <td className="py-2 pr-4">{analytics.cardsTotal[i] ? `${analytics.cardsRead[i]}/${analytics.cardsTotal[i]}` : t.analytics_no_data}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6">
+                  <h3 className="font-serif font-bold text-lg mb-4">{t.analytics_form_title}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">{t.analytics_group}</label>
+                      <select value={studentInfo.group} onChange={e=>setStudentInfo(s=>({...s, group:e.target.value}))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm">
+                        <option value="">{t.analytics_group_select}</option>
+                        {t.group_options.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">{t.analytics_dept}</label>
+                      <input value={studentInfo.dept} onChange={e=>setStudentInfo(s=>({...s, dept:e.target.value.slice(0,20)}))} placeholder={t.analytics_dept_ph}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">{t.analytics_id}</label>
+                      <input value={studentInfo.id} onChange={e=>setStudentInfo(s=>({...s, id:e.target.value.replace(/[^0-9]/g,'').slice(0,12)}))} placeholder={t.analytics_id_ph}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">{t.analytics_name_en}</label>
+                      <input value={studentInfo.nameEn} onChange={e=>setStudentInfo(s=>({...s, nameEn:e.target.value.replace(/[<>"'&\\]/g,'').slice(0,50)}))} placeholder={t.analytics_name_en_ph}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">{t.analytics_name_zh}</label>
+                      <input value={studentInfo.nameZh} onChange={e=>setStudentInfo(s=>({...s, nameZh:e.target.value.replace(/[<>"'&\\]/g,'').slice(0,50)}))} placeholder={t.analytics_name_zh_ph}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-sm" />
+                    </div>
+                  </div>
+                  {!canExport && <p className="text-xs text-amber-500 mt-3">{t.analytics_fill_required}</p>}
+                  <button onClick={exportCSV} disabled={!canExport}
+                    className="mt-4 px-6 py-2 bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg disabled:opacity-40">
+                    {t.analytics_export_csv}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="mt-12 flex justify-between items-center pt-8 border-t border-slate-300 dark:border-slate-700">
+            <button onClick={() => goTo(Math.max(0,module-1))} disabled={module===0}
+              className="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg disabled:opacity-0">{t.nav_prev}</button>
+            <button onClick={() => goTo(Math.min(TOTAL-1,module+1))} disabled={module===TOTAL-1}
+              className="px-4 py-2 text-sm bg-[#004030] dark:bg-[#D8C3A5] text-white dark:text-[#004030] font-bold rounded-lg disabled:opacity-0">{t.nav_next}</button>
+          </div>
+        </main>
+      </div>
+
+      <footer className="h-8 bg-[#004030] flex items-center justify-between px-4 shrink-0">
+        <span className="text-[#D8C3A5]/60 text-[10px] sm:text-xs">{t.date} · {t.copyright}</span>
+        <span className="text-[#D8C3A5]/60 text-[10px] sm:text-xs flex items-center gap-3">
+          <span>{t.architect_label}&nbsp;<a href={t.architect_url} target="_blank" rel="noopener noreferrer" className="text-[#D8C3A5] hover:text-white underline">{t.architect_name}</a></span>
+          <button onClick={() => window.scrollTo({top:0,behavior:'smooth'})} className="text-[#D8C3A5] hover:text-white font-bold">Top ↑</button>
+        </span>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
