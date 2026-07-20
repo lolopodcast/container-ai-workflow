@@ -1,0 +1,19 @@
+{
+  "name": "AI 容器化與高階 Agent 數據情報工作流",
+  "short_name": "CAIW",
+  "description": "AI Containerization & Advanced Agent Intelligence Workflow — an interactive bilingual learning SPA",
+  "id": "/container-ai-workflow/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#121212",
+  "theme_color": "#004030",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
