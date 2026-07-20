@@ -40,7 +40,7 @@
 
 <script>
 (function(){
-  var ALLOWED = ['localhost','127.0.0.1']; // TODO: 部署到正式網域前，請把該網域加入此陣列
+  var ALLOWED = ['localhost','127.0.0.1','lolopodcast.github.io'];
   var REDIRECT = 'https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo';
   var isFile = location.protocol === 'file:';
   if (!isFile && !ALLOWED.some(function(d){ return location.hostname === d || location.hostname.endsWith('.'+d); })) {
