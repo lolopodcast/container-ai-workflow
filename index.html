@@ -115,7 +115,7 @@ const _d = (token) => {
 const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
 
 /* ---------- module numbering ---------- */
-const NUM_LEARN = 4;
+const NUM_LEARN = 6;
 const TOTAL = 1 + NUM_LEARN + 3;
 const IDX_LAB = NUM_LEARN + 1;
 const IDX_RES = NUM_LEARN + 2;
@@ -170,7 +170,7 @@ const dict = {
     deep_dive_label: "Deep Dive 深入解析",
     wrapup_label: "Wrap-up 總結",
 
-    analytics_nav: "7. 學習歷程分析",
+    analytics_nav: "9. 學習歷程分析",
     analytics_title: "學習歷程分析", analytics_desc: "本頁彙整你在各模組的停留時間、互動次數、測驗答對率與學習卡使用率，並提供弱點分析與 CSV 匯出。",
     analytics_form_title: "基本資料（匯出前請填寫）",
     analytics_group: "組別", analytics_group_select: "請選擇", analytics_dept: "系級",
@@ -213,7 +213,9 @@ const dict = {
       { num:"01", title:"四層基礎設施", desc:"容器、套件、外掛、連接器、沙盒五個概念，如何組成一棟具備保全機制的建築。" },
       { num:"02", title:"Agent 雙小組", desc:"技術實作小組與決策分析小組如何分工，各自形成閉環。" },
       { num:"03", title:"五步驟工作流", desc:"從環境初始化到終端輸出，一條完整的情報產出流水線。" },
-      { num:"04", title:"指令範本實戰", desc:"如何用架構語意，而非實作細節，向 AI 下達高階指令。" }
+      { num:"04", title:"指令範本實戰", desc:"如何用架構語意，而非實作細節，向 AI 下達高階指令。" },
+      { num:"05", title:"Agent 解剖學", desc:"四件套、Vibe Coding、Skill 與 Subagent 的差異，以及 Agent 的四種創造來源。" },
+      { num:"06", title:"審查代理人實戰", desc:"以真實建置的多視角審查系統，示範概念如何組裝成可擴充、跨平台的 Agent 團隊。" }
     ],
     m0_stats: [
       { val:"4", label:"基礎設施層" },
@@ -321,7 +323,60 @@ const dict = {
       { q:"套用指令範本到新主題時，真正需要更動的是？", opts:["整套架構語意都要重新設計","只需要替換方括號內的主題，架構本身可重複套用","需要重新定義所有 Agent 角色","需要重新撰寫沙盒的安全機制"], ans:_A1, exp:"架構（容器、連接器、沙盒、雙小組、五步驟）是固定可重複套用的，唯一需要更動的是主題本身。" }
     ],
 
-    mlab_nav: "5. 互動實驗室", mlab_title: "互動實驗室",
+    m5_nav: "5. Agent 解剖學",
+    m5_title: "Agent 解剖學：四件套、Skill 與 Subagent",
+    m5_overview: "前四個模組從「使用者」視角理解工作流；本模組切換到「建造者」視角：一個 Agent 由哪四個元件組成？Skill 與 Subagent 有什麼差異？Agent 又可以從哪些地方被創造出來？理解這些，你就能從「使用 AI 的人」升級為「打造 AI 團隊的人」。",
+    m5_highlights: ["Agent 四件套","Vibe Coding","Skill＝流程手冊","Subagent＝職務說明書","相對關係","Claude Agent SDK"],
+    m5_p1: "任何一個 Agent，拆開來看都是四樣東西的組合：一顆腦袋（底層模型）、一組能呼叫的工具（檔案讀寫、終端機、瀏覽器、搜尋）、一份規範角色與行為的職務說明書（系統提示詞），以及一個讓它「行動→觀察結果→再行動」反覆執行的迴圈（harness）。四者湊齊，這個角色就能自己做事、自己修正——這就是 Agent 與單純聊天模型的分水嶺。",
+    m5_p2: "Vibe Coding 與 Agent 是兩個不同層次的概念：Agent 是「誰在做」，Vibe Coding 是「你怎麼跟它說」——只描述目標與架構語意，把實作細節交給 Agent 自主決定。你可以擁有 Agent 卻不 Vibe Coding（逐行指定寫法），也可以 Vibe Coding 卻沒有真正的 Agent（單純與聊天模型對話）。兩者搭配，才是完整的協作模式。",
+    m5_p3: "Skill 與 Subagent 都是把「臨時的 Vibe Coding」固化成「可重複觸發的資產」，但性質不同：Skill 是一本流程手冊（SOP），動詞式地教 Agent「這種任務該怎麼做」；Subagent 則是一張職務說明書，名詞式地定義「這個角色是誰、能用哪些工具、用哪顆腦袋」。手冊需要有人來執行，職務說明書則直接聘僱了一位新員工——兩者常常搭配使用：手冊裡指定某個步驟交給某位員工。",
+    m5_p4: "Agent 可以從四個地方被創造出來：（一）系統內建的預設員工，如負責唯讀搜尋的 Explore、負責規劃的 Plan；（二）自訂職務卡——在 .claude/agents/ 資料夾放一份 Markdown 檔（開頭 YAML 定義名稱、職責、工具權限、模型，底下是系統提示詞），貼上佈告欄即完成聘僱；（三）臨時外包——當場口頭交代一件事，做完即散，不留常駐角色；（四）程式化人資系統——用 Claude Agent SDK 在自己的應用程式裡批量定義。最後記住：Agent 與 Subagent 不是兩個物種，而是同一種生物的相對位置——直接面對使用者的叫主 Agent（總機），被指派任務、做完回報、用完即忘的叫 Subagent（員工）；換個位置，身份就換。",
+    m5_wrapup: "Agent＝模型＋工具＋提示詞＋迴圈的四件套組合；Vibe Coding 是與它協作的高階語言。Skill 把「怎麼做」固化成流程手冊，Subagent 把「誰來做」固化成職務說明書，兩者都是可重複觸發的資產。Agent 的創造來源有四：內建員工、自訂職務卡、臨時外包、SDK 程式化定義；而 Agent 與 Subagent 的差別不在本質，在於「誰在指揮誰」的相對位置。",
+    m5_terms: [
+      { front:"Agent 四件套", back:"模型（腦袋）＋工具（手腳）＋系統提示詞（職務說明）＋執行迴圈（工作節奏），四者齊備才是 Agent。" },
+      { front:"Vibe Coding", back:"只描述目標與架構語意、把實作細節交給 Agent 的協作方式——是「怎麼說」，不是「誰在做」。" },
+      { front:"Skill（流程手冊）", back:"動詞式資產：教 Agent 某類任務的做法與步驟，被觸發後載入情境，本身不會動。" },
+      { front:"Subagent（職務說明書）", back:"名詞式資產：定義一個常駐角色的職責、工具權限與模型，等於聘僱一位新員工。" },
+      { front:".claude/agents/", back:"自訂 Subagent 的安裝位置：一份 YAML＋系統提示詞的 Markdown 檔即完成聘僱。" },
+      { front:"臨時 Agent", back:"當場交辦、做完即散的一次性外包，不需要事先寫職務卡。" },
+      { front:"Claude Agent SDK", back:"在自己的應用程式中用程式碼批量定義 Agent 的「人資系統」。" },
+      { front:"主 Agent vs Subagent", back:"相對關係而非物種差異：面對使用者的是主 Agent，被指派回報的是 Subagent，位置變身份就變。" }
+    ],
+    m5_q: [
+      { q:"Agent 四件套指的是哪四樣元件的組合？", opts:["模型、工具、系統提示詞、執行迴圈","容器、套件、連接器、沙盒","理論家、實務家、批判家、仲裁者","Skill、Subagent、SDK、終端機"], ans:_A0, exp:"Agent＝腦袋（模型）＋手腳（工具）＋職務說明（系統提示詞）＋工作節奏（執行迴圈），四者齊備才能自主行動與修正。" },
+      { q:"Skill 與 Subagent 最貼切的比喻差異是？", opts:["兩者都是聊天機器人，沒有差異","Skill 是流程手冊（怎麼做），Subagent 是職務說明書（誰來做）","Skill 是硬體，Subagent 是軟體","Skill 是付費功能，Subagent 是免費功能"], ans:_A1, exp:"Skill 動詞式地定義任務流程，需要 Agent 來執行；Subagent 名詞式地定義一個常駐角色，本身就是可派工的完整 Agent。" },
+      { q:"在 .claude/agents/ 放一份含 YAML 與系統提示詞的 Markdown 檔，等同於什麼動作？", opts:["刪除一個舊員工","聘僱一位常駐的 Subagent 員工","啟動沙盒環境","發布網頁到 GitHub Pages"], ans:_A1, exp:"這份檔案就是職務說明卡：名稱、職責描述、工具權限、模型都定義好，貼上佈告欄即完成聘僱，之後可被主 Agent 派工。" },
+      { q:"Agent 與 Subagent 的差異本質是什麼？", opts:["使用的模型大小不同","擁有的工具數量不同","相對位置不同：誰直接面對使用者、誰被指派後回報","收費方式不同"], ans:_A2, exp:"兩者結構上都是完整的 Agent；差別只在「誰在指揮誰」——換個位置，身份就換，不是兩個物種。" },
+      { q:"「可以有 Agent 卻不 Vibe Coding」是什麼意思？", opts:["這種情況不存在","使用 Agent 時仍逐行指定實作細節，未把決策交給 AI","代表 Agent 故障了","代表只使用免費模型"], ans:_A1, exp:"Vibe Coding 是互動風格而非工具本身：即使用了 Claude Code 這類 Agent，若每行程式碼都親自指定寫法，就不是 Vibe Coding 的精神。" }
+    ],
+
+    m6_nav: "6. 審查代理人實戰",
+    m6_title: "實戰案例：審查代理人系統設計",
+    m6_overview: "本模組用一個真實建置並實測通過的系統——多視角審查代理人（Review Agent）——示範前五個模組的概念如何組裝成可運作、可擴充、可跨平台的 Agent 團隊：三位常駐審查員工、一位查核後勤、一本總機手冊，以及五個關鍵設計決策。",
+    m6_highlights: ["角色與規準解耦","Full／Lite 雙模式","查核閉環","知識可攜","遺留資產治理"],
+    m6_p1: "需求：審查四類內容（量化論文、質性論文、財務策略報告、總經市場報告），且每份文件都要從理論、實務、批判風險三個立場檢視。架構解法是四層：總審查官（主 Agent）負責分類與派工；三位視角審查員（理論家、實務家、批判家）是用職務說明書聘僱的常駐 Subagent，只有唯讀工具；查核員是共用後勤，獨享搜尋與重算工具；最後由總審查官綜合仲裁產出報告。",
+    m6_p2: "決策一：角色與規準解耦。不要為「4 種內容 × 3 種視角」建 12 個員工——只聘 3 位角色固定的審查員，把內容差異全部封裝進 4 份規準檔（rubric）。新增審查領域時，寫一份新規準文件即可，任何角色都不用動。這是整套系統可擴充性的來源。",
+    m6_p3: "決策二：批評必須可查核——審查員只能「標記」可疑宣稱，由查核員實際用搜尋與重算驗證，判定 CONFIRMED／REFUTED／UNVERIFIABLE 且必附來源；這是沙盒驗證精神的延伸：主張經過工具驗證才算數。決策三：Full／Lite 雙模式——Full 用多 Subagent 平行審查（成本約 5-8 倍，用於定稿），Lite 在單一情境內依序扮演三角色（日常快查）；同一套知識、兩個檔位。",
+    m6_p4: "決策四：知識可攜、接線各平台——角色定義、規準、SOP、報告模板全部是純 Markdown（core/，唯一事實來源）；各平台只留一層薄接頭（adapters/）：Claude Code 能跑 Full 模式，ChatGPT 與 Gemini 因為沒有多 Subagent 機制只能跑 Lite。決策五：遺留資產治理——新系統與既有的專用審查 skill 分流共存而非立即淘汰，等新系統累積實戰紀錄後，再把舊 skill 改造成新架構上的領域擴充包。系統上線前用一份刻意埋錯的樣本報告做煙霧測試：三位審查員分工零重複地抓出各自領域的缺陷，查核員以公開來源反駁了三條關鍵宣稱——這就是整套架構的驗收方式。",
+    m6_wrapup: "審查代理人系統示範了把概念組裝成真實系統的完整路徑：四層架構分派角色、角色與規準解耦保證擴充性、查核閉環守住事實底線、Full／Lite 雙模式平衡成本與品質、core／adapters 分離實現跨平台、遺留治理確保新舊系統平順過渡。設計原則的價值在於：擴充新領域從「重建系統」變成「寫一份文件」。",
+    m6_terms: [
+      { front:"角色與規準解耦", back:"3 個角色固定不變，內容差異封裝進規準檔；新增領域＝新增一份文件，不動任何角色。" },
+      { front:"Full 模式", back:"多 Subagent 平行審查＋查核＋綜合，成本約 Lite 的 5-8 倍，用於定稿與高風險文件。" },
+      { front:"Lite 模式", back:"單一情境內依序扮演三角色的快速審查，日常與初稿適用；ChatGPT/Gemini 只能跑此模式。" },
+      { front:"查核員 Fact-checker", back:"共用後勤：用搜尋與重算驗證被標記的宣稱，判定必附來源，查不到誠實標 UNVERIFIABLE。" },
+      { front:"core／adapters", back:"core 是純 Markdown 的唯一事實來源；adapters 是各平台的薄接線層。" },
+      { front:"煙霧測試", back:"用刻意埋錯的樣本走完整條流水線，驗證架構是否如設計運作。" },
+      { front:"遺留資產治理", back:"新舊系統分流共存，實戰驗證後才逐步把舊 skill 改造成擴充包。" }
+    ],
+    m6_q: [
+      { q:"審查系統為何只建 3 個角色、而不是「4 內容 × 3 視角」的 12 個 Subagent？", opts:["因為預算不足","因為角色與規準解耦：角色固定，內容差異封裝進規準檔","因為平台最多只允許 3 個","因為審查不需要分視角"], ans:_A1, exp:"3 位審查員的「心態」固定不變，內容類型的差異全部由規準檔參數化；新增領域只需寫一份新文件，這是可擴充性的來源。" },
+      { q:"查核閉環中，審查員與查核員的分工是？", opts:["審查員自行上網查證每條宣稱","查核員負責撰寫審查意見","審查員只標記可疑宣稱，查核員用搜尋與重算驗證並附來源","兩者做完全相同的事以互相備援"], ans:_A2, exp:"審查員專注判讀文件、標記可疑處；查核員獨享搜尋與重算工具，實際驗證後給出 CONFIRMED/REFUTED/UNVERIFIABLE 判定。" },
+      { q:"為什麼 ChatGPT 與 Gemini 網頁版只能跑 Lite 模式？", opts:["因為它們沒有多 Subagent 平行機制","因為它們不支援 Markdown","因為規準檔案太大無法上傳","因為授權費用太高"], ans:_A0, exp:"Full 模式需要真正平行、彼此獨立的多個 Subagent；網頁版聊天工具只能在單一情境內依序扮演角色，即 Lite 模式。" },
+      { q:"core/ 與 adapters/ 的分工原則是？", opts:["core 放程式碼、adapters 放文件","知識可攜（core 純 Markdown 唯一事實來源）、接線各平台（adapters 薄接頭）","core 給教師使用、adapters 給學生使用","兩者內容相同，互為備份"], ans:_A1, exp:"角色、規準、SOP 都是純文字放在 core/，到任何平台都能用；各平台只需要一層薄薄的接線設定。" },
+      { q:"對既有的專用審查 skill，系統採取什麼治理策略？", opts:["立即全部刪除以避免混亂","分流共存，待新系統實戰驗證後再改造為領域擴充包","改名後隱藏起來","轉為付費功能"], ans:_A1, exp:"舊 skill 含新系統沒有的領域知識且久經實戰；正確做法是共存分流，等新系統證明自己後再逐步遷移，而非立即淘汰。" }
+    ],
+
+    mlab_nav: "7. 互動實驗室", mlab_title: "互動實驗室",
     mlab_desc: "透過四個小活動，親手體驗四層基礎設施的排序邏輯、概念與比喻的對應關係、指令範本的產生方式，以及沙盒如何把風險鎖在內部。",
     mlab_labs: [
       { title:"五步驟排序挑戰", desc:"依正確順序點選五個工作流步驟，測試你對整條流水線的掌握程度。" },
@@ -341,7 +396,7 @@ const dict = {
     mlab_risk_core: "核心系統", mlab_risk_sandbox_label: "沙盒環境",
     mlab_risk_safe: "風險已鎖在沙盒內，核心系統安全", mlab_risk_danger: "沒有沙盒保護，風險已外溢到核心系統！",
 
-    mres_nav: "6. 外部學習資源", mres_title: "外部學習資源",
+    mres_nav: "8. 外部學習資源", mres_title: "外部學習資源",
     mres_desc: "以下資源可以幫助你把本知識庫的概念，對應到實際的技術文件與工具生態。",
     mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作",
 
@@ -370,7 +425,7 @@ const dict = {
     deep_dive_label: "Deep Dive",
     wrapup_label: "Wrap-up",
 
-    analytics_nav: "7. Learning Analytics",
+    analytics_nav: "9. Learning Analytics",
     analytics_title: "Learning Analytics", analytics_desc: "This page summarises your time on each module, interaction counts, quiz accuracy and flashcard usage, plus weak-point analysis and CSV export.",
     analytics_form_title: "Basic Info (fill in before exporting)",
     analytics_group: "Group", analytics_group_select: "Please select", analytics_dept: "Department/Year",
@@ -413,7 +468,9 @@ const dict = {
       { num:"01", title:"Four Infrastructure Layers", desc:"How container, package, plugin, connector and sandbox form a secured building." },
       { num:"02", title:"Dual Agent Squads", desc:"How the engineering squad and analyst squad divide labour, each forming its own closed loop." },
       { num:"03", title:"Five-Step Workflow", desc:"A complete intelligence pipeline from environment initialisation to terminal output." },
-      { num:"04", title:"Prompt Templates in Action", desc:"How to issue high-level instructions to AI using architectural semantics, not implementation detail." }
+      { num:"04", title:"Prompt Templates in Action", desc:"How to issue high-level instructions to AI using architectural semantics, not implementation detail." },
+      { num:"05", title:"Agent Anatomy", desc:"The four components, vibe coding, skills vs subagents, and the four sources agents are created from." },
+      { num:"06", title:"Review Agent Case Study", desc:"A real multi-perspective review system showing how the concepts assemble into an extensible, cross-platform agent team." }
     ],
     m0_stats: [
       { val:"4", label:"Infrastructure Layers" },
@@ -521,7 +578,60 @@ const dict = {
       { q:"When applying the template to a new topic, what actually needs to change?", opts:["The entire architectural semantics must be redesigned","Only the topic inside the brackets needs replacing — the architecture itself is reusable","All agent roles must be redefined","The sandbox's safety mechanism must be rewritten"], ans:_A1, exp:"The architecture (container, connector, sandbox, dual squads, five steps) is fixed and reusable — only the topic itself needs to change." }
     ],
 
-    mlab_nav: "5. Interactive Lab", mlab_title: "Interactive Lab",
+    m5_nav: "5. Agent Anatomy",
+    m5_title: "Agent Anatomy: The Four Components, Skills & Subagents",
+    m5_overview: "The first four modules viewed the workflow from a user's perspective; this module switches to the builder's perspective: what four components make up an agent? How do skills differ from subagents? And where can agents actually be created? Understanding this upgrades you from someone who uses AI to someone who builds AI teams.",
+    m5_highlights: ["Four Components","Vibe Coding","Skill = SOP Manual","Subagent = Job Description","Relative Roles","Claude Agent SDK"],
+    m5_p1: "Take any agent apart and you find the same four things: a brain (the underlying model), a set of callable tools (file I/O, terminal, browser, search), a job description that defines its role and behaviour (the system prompt), and a loop that lets it act, observe the result, and act again (the harness). When all four come together, the role can work and self-correct on its own — this is the dividing line between an agent and a plain chat model.",
+    m5_p2: "Vibe coding and agents are concepts on different levels: the agent is 'who does the work', vibe coding is 'how you talk to it' — describing only the goal and architectural semantics while leaving implementation details for the agent to decide. You can own an agent without vibe coding (dictating every line yourself), and you can vibe code without a true agent (just chatting with a plain model). Combined, they form the complete collaboration pattern.",
+    m5_p3: "Skills and subagents both solidify one-off vibe coding into reusable, triggerable assets — but they differ in kind. A skill is an SOP manual: verb-like, teaching the agent how a certain type of task should be done. A subagent is a job description: noun-like, defining who a role is, which tools it may touch, and which brain it runs on. A manual still needs someone to execute it; a job description directly hires a new employee. The two often work together: a manual can assign a particular step to a particular employee.",
+    m5_p4: "Agents can be created from four places: (1) built-in default employees, such as the read-only searcher Explore or the planner Plan; (2) custom job cards — drop a Markdown file into the .claude/agents/ folder (YAML at the top defining name, description, tool permissions and model, with the system prompt below), and the hire is complete the moment the card goes up; (3) temporary outsourcing — verbally assign a one-off job on the spot, and the worker dissolves when it's done; (4) a programmatic HR system — defining agents in code at scale via the Claude Agent SDK. Finally, remember: agent versus subagent is not a difference of species but of relative position — the one facing the user is the main agent (the front desk); the one that takes assignments, reports back, and forgets when done is the subagent (the employee). Change the position, and the identity changes.",
+    m5_wrapup: "An agent is the four-part combination of model + tools + prompt + loop; vibe coding is the high-level language for collaborating with it. A skill solidifies 'how to do it' into an SOP manual, a subagent solidifies 'who does it' into a job description — both are reusable, triggerable assets. Agents are created from four sources: built-in employees, custom job cards, temporary outsourcing, and SDK-programmatic definition; and the agent/subagent distinction lies not in essence but in who is directing whom.",
+    m5_terms: [
+      { front:"The Four Components", back:"Model (brain) + tools (hands) + system prompt (job description) + execution loop (work rhythm) — all four together make an agent." },
+      { front:"Vibe Coding", back:"Describing only the goal and architectural semantics, leaving implementation to the agent — it is 'how you talk', not 'who does the work'." },
+      { front:"Skill (SOP Manual)", back:"A verb-like asset: teaches the agent how a class of task is done; loaded into context when triggered, it cannot act by itself." },
+      { front:"Subagent (Job Description)", back:"A noun-like asset: defines a resident role's duties, tool permissions and model — equivalent to hiring a new employee." },
+      { front:".claude/agents/", back:"Where custom subagents are installed: one Markdown file with YAML plus a system prompt completes the hire." },
+      { front:"Temporary Agent", back:"A one-off outsourced worker assigned on the spot, dissolving when the job is done — no job card needed." },
+      { front:"Claude Agent SDK", back:"The 'HR system' for defining agents programmatically, at scale, inside your own application." },
+      { front:"Main Agent vs Subagent", back:"A relative relationship, not different species: the one facing the user is the main agent; the one assigned and reporting back is the subagent." }
+    ],
+    m5_q: [
+      { q:"What are the four components that make up an agent?", opts:["Model, tools, system prompt, execution loop","Container, package, connector, sandbox","Theorist, practitioner, critic, synthesizer","Skill, subagent, SDK, terminal"], ans:_A0, exp:"Agent = brain (model) + hands (tools) + job description (system prompt) + work rhythm (execution loop); only with all four can it act and self-correct autonomously." },
+      { q:"What is the most fitting metaphor for the difference between a skill and a subagent?", opts:["Both are chatbots, there is no difference","A skill is an SOP manual (how to do it), a subagent is a job description (who does it)","A skill is hardware, a subagent is software","A skill is a paid feature, a subagent is free"], ans:_A1, exp:"A skill defines a task process verb-like and needs an agent to execute it; a subagent defines a resident role noun-like and is itself a dispatchable agent." },
+      { q:"Dropping a Markdown file with YAML and a system prompt into .claude/agents/ is equivalent to what?", opts:["Firing an old employee","Hiring a resident subagent employee","Starting a sandbox environment","Publishing a page to GitHub Pages"], ans:_A1, exp:"That file is the job card: name, duties, tool permissions and model all defined — posting it completes the hire, and the main agent can then dispatch work to it." },
+      { q:"What is the essential difference between an agent and a subagent?", opts:["The size of the model used","The number of tools owned","Relative position: who faces the user, and who is assigned work and reports back","The pricing model"], ans:_A2, exp:"Both are structurally complete agents; the difference is only in who directs whom — change the position and the identity changes. They are not two species." },
+      { q:"What does 'you can own an agent without vibe coding' mean?", opts:["Such a situation cannot exist","Using an agent while still dictating every implementation detail, never delegating decisions to the AI","It means the agent is broken","It means only free models are used"], ans:_A1, exp:"Vibe coding is an interaction style, not the tool itself: even with an agent like Claude Code, dictating every line of code is not the spirit of vibe coding." }
+    ],
+
+    m6_nav: "6. Review Agent Case Study",
+    m6_title: "Case Study: Designing the Review Agent System",
+    m6_overview: "This module uses a real, built-and-tested system — the multi-perspective Review Agent — to demonstrate how the concepts of the previous five modules assemble into a working, extensible, cross-platform agent team: three resident reviewer employees, one fact-checking back office, one front-desk manual, and five key design decisions.",
+    m6_highlights: ["Role-Rubric Decoupling","Full/Lite Dual Mode","Fact-check Loop","Portable Knowledge","Legacy Governance"],
+    m6_p1: "The requirement: review four content types (quantitative papers, qualitative papers, financial-strategy reports, macro/market reports), each examined from three stances — theoretical, practical, and critical-risk. The architectural answer is four layers: a Chief Reviewer (main agent) classifies the document and dispatches work; three perspective reviewers (theorist, practitioner, critic) are resident subagents hired via job descriptions, holding read-only tools only; a fact-checker serves as shared back office, alone holding search and recomputation tools; finally the Chief Reviewer synthesizes everything into a report.",
+    m6_p2: "Decision 1: decouple roles from rubrics. Do not build 12 employees for '4 content types × 3 perspectives' — hire only 3 fixed-role reviewers, and encapsulate all content differences into 4 rubric files. Adding a new review domain means writing one new document, touching no role at all. This is where the whole system's extensibility comes from.",
+    m6_p3: "Decision 2: criticism must be verifiable — reviewers may only flag suspicious claims; the fact-checker actually verifies them with search and recomputation, ruling CONFIRMED / REFUTED / UNVERIFIABLE with sources attached. This extends the sandbox-verification spirit: a claim only counts once a tool has verified it. Decision 3: Full/Lite dual mode — Full runs multiple subagents in parallel (about 5-8× the cost, for final drafts), Lite plays the three roles sequentially in one context (daily quick checks); one knowledge base, two gears.",
+    m6_p4: "Decision 4: portable knowledge, per-platform wiring — role definitions, rubrics, SOP and report templates are all plain Markdown (core/, the single source of truth); each platform keeps only a thin adapter (adapters/): Claude Code can run Full mode, while ChatGPT and Gemini can only run Lite for lack of a multi-subagent mechanism. Decision 5: legacy governance — the new system coexists with the existing specialised review skills through explicit triage rules rather than replacing them outright; only after the new system accumulates a real track record will the old skills be refactored into domain packs on the new architecture. Before launch, the whole pipeline was smoke-tested on a sample report with deliberately planted flaws: the three reviewers caught their respective defects with zero overlap, and the fact-checker refuted three key claims against public sources — that is how an architecture gets accepted.",
+    m6_wrapup: "The Review Agent system demonstrates the full path from concepts to a real system: a four-layer architecture assigns the roles, role-rubric decoupling guarantees extensibility, the fact-check loop guards the factual bottom line, Full/Lite dual mode balances cost against quality, the core/adapters split delivers cross-platform portability, and legacy governance ensures a smooth transition between old and new. The value of these principles: extending to a new domain becomes 'writing one document' instead of 'rebuilding a system'.",
+    m6_terms: [
+      { front:"Role-Rubric Decoupling", back:"Three roles stay fixed; content differences are encapsulated in rubric files. New domain = one new document, no role touched." },
+      { front:"Full Mode", back:"Parallel multi-subagent review + fact-check + synthesis; about 5-8× Lite's cost, for final drafts and high-stakes documents." },
+      { front:"Lite Mode", back:"Playing the three roles sequentially in one context for quick daily reviews; ChatGPT/Gemini can only run this mode." },
+      { front:"Fact-checker", back:"Shared back office: verifies flagged claims via search and recomputation; every ruling cites sources, and honest UNVERIFIABLE when nothing is found." },
+      { front:"core / adapters", back:"core is the plain-Markdown single source of truth; adapters are each platform's thin wiring layer." },
+      { front:"Smoke Test", back:"Running a deliberately flawed sample through the whole pipeline to verify the architecture works as designed." },
+      { front:"Legacy Governance", back:"Old and new systems coexist with triage rules; old skills become domain packs only after the new system proves itself." }
+    ],
+    m6_q: [
+      { q:"Why does the review system build only 3 roles instead of 12 subagents (4 content types × 3 perspectives)?", opts:["Because of budget constraints","Because roles and rubrics are decoupled: roles stay fixed, content differences are encapsulated in rubric files","Because the platform allows at most 3","Because reviews don't need multiple perspectives"], ans:_A1, exp:"The three reviewers' mindsets never change; content-type differences are parameterised into rubric files. Adding a domain means writing one new document — the source of extensibility." },
+      { q:"In the fact-check loop, how is work divided between reviewers and the fact-checker?", opts:["Each reviewer verifies claims online by themselves","The fact-checker writes the review comments","Reviewers only flag suspicious claims; the fact-checker verifies them with search and recomputation, citing sources","Both do exactly the same work as mutual backup"], ans:_A2, exp:"Reviewers focus on reading and flagging; the fact-checker alone holds search and recomputation tools, ruling CONFIRMED/REFUTED/UNVERIFIABLE after actual verification." },
+      { q:"Why can ChatGPT and Gemini web versions only run Lite mode?", opts:["Because they lack a parallel multi-subagent mechanism","Because they don't support Markdown","Because rubric files are too large to upload","Because licensing costs are too high"], ans:_A0, exp:"Full mode needs genuinely parallel, mutually independent subagents; web chat tools can only role-play sequentially in a single context — which is Lite mode." },
+      { q:"What is the division of labour between core/ and adapters/?", opts:["core holds code, adapters hold documents","Portable knowledge (core, plain-Markdown single source of truth) and per-platform wiring (adapters, thin connectors)","core is for teachers, adapters for students","They hold identical content as mutual backups"], ans:_A1, exp:"Roles, rubrics and SOP are plain text in core/, usable on any platform; each platform needs only a thin layer of wiring configuration." },
+      { q:"What governance strategy does the system adopt toward the existing specialised review skills?", opts:["Delete them all immediately to avoid confusion","Coexist with triage rules; refactor them into domain packs only after the new system proves itself in real use","Rename and hide them","Turn them into paid features"], ans:_A1, exp:"The old skills hold domain knowledge the new system lacks and are battle-tested; the right move is coexistence with triage, migrating gradually only after the new system earns its record." }
+    ],
+
+    mlab_nav: "7. Interactive Lab", mlab_title: "Interactive Lab",
     mlab_desc: "Four hands-on activities let you experience the ordering logic of the four infrastructure layers, the mapping between concepts and metaphors, how prompt templates are generated, and how the sandbox keeps risk contained inside.",
     mlab_labs: [
       { title:"Step Sequencing Challenge", desc:"Click the five workflow steps in the correct order to test how well you've mastered the pipeline." },
@@ -541,7 +651,7 @@ const dict = {
     mlab_risk_core: "Core System", mlab_risk_sandbox_label: "Sandbox Environment",
     mlab_risk_safe: "Risk is locked inside the sandbox — core system safe", mlab_risk_danger: "No sandbox protection — risk has spilled into the core system!",
 
-    mres_nav: "6. Learning Resources", mres_title: "External Learning Resources",
+    mres_nav: "8. Learning Resources", mres_title: "External Learning Resources",
     mres_desc: "The resources below connect this knowledge base's concepts to real technical documentation and tooling ecosystems.",
     mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration",
 
@@ -826,6 +936,41 @@ const TemplateDiagram = ({lang}) => {
   );
 };
 
+const AgentAnatomyDiagram = ({lang}) => {
+  const parts = lang==='zh'
+    ? ['模型（腦袋）','工具（手腳）','提示詞（職務說明）','迴圈（工作節奏）']
+    : ['Model (brain)','Tools (hands)','Prompt (job description)','Loop (harness)'];
+  return (
+    <svg viewBox="0 0 420 220" className="w-full max-w-md">
+      <rect x="160" y="85" width="100" height="50" rx="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+      <text x="210" y="115" textAnchor="middle" fontSize="14" fontWeight="bold" fill="currentColor">Agent</text>
+      {[[10,10],[230,10],[10,170],[230,170]].map((pos,i) => (
+        <g key={i}>
+          <rect x={pos[0]} y={pos[1]} width="180" height="40" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.6"/>
+          <text x={pos[0]+90} y={pos[1]+25} textAnchor="middle" fontSize="11" fill="currentColor">{parts[i]}</text>
+          <line x1={pos[0]+90} y1={pos[1]<85 ? pos[1]+40 : pos[1]} x2="210" y2={pos[1]<85 ? 85 : 135} stroke="currentColor" strokeWidth="1" opacity="0.35"/>
+        </g>
+      ))}
+    </svg>
+  );
+};
+const ReviewAgentDiagram = ({lang}) => {
+  const L = lang==='zh'
+    ? ['總審查官（分類・派工・綜合）','理論家｜實務家｜批判家（平行審查）','查核員（搜尋・重算・附來源）','標準化審查報告']
+    : ['Chief Reviewer (classify · dispatch · synthesize)','Theorist | Practitioner | Critic (parallel)','Fact-checker (search · recompute · cite)','Standardised Review Report'];
+  return (
+    <svg viewBox="0 0 420 230" className="w-full max-w-md">
+      {L.map((l,i) => (
+        <g key={i}>
+          <rect x="30" y={10+i*56} width="360" height="38" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={i===1?0.9:0.6}/>
+          <text x="210" y={34+i*56} textAnchor="middle" fontSize="11" fill="currentColor">{l}</text>
+          {i<3 && <text x="210" y={57+i*56} textAnchor="middle" fontSize="12" fill="currentColor">↓</text>}
+        </g>
+      ))}
+    </svg>
+  );
+};
+
 /* ---------- lab activities ---------- */
 const StepOrderLab = ({lang, t}) => {
   const [pool] = useState(() => [...STEP_ORDER].sort(() => Math.random()-0.5));
@@ -985,12 +1130,23 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [ttsState, setTtsState] = useState('idle');
   const [studentInfo, setStudentInfo] = useState(() => loadLS(LS_STU, { group:'', dept:'', id:'', nameEn:'', nameZh:'' }));
-  const [analytics, setAnalytics] = useState(() => loadLS(LS_KEY, {
-    time: Array(TOTAL).fill(0), clicks: Array(TOTAL).fill(0),
-    quizCorrect: Array(TOTAL).fill(0), quizTotal: Array(TOTAL).fill(0),
-    cardsRead: Array(TOTAL).fill(0), cardsTotal: Array(TOTAL).fill(0),
-    wrongTopics: {}
-  }));
+  const [analytics, setAnalytics] = useState(() => {
+    const fb = {
+      time: Array(TOTAL).fill(0), clicks: Array(TOTAL).fill(0),
+      quizCorrect: Array(TOTAL).fill(0), quizTotal: Array(TOTAL).fill(0),
+      cardsRead: Array(TOTAL).fill(0), cardsTotal: Array(TOTAL).fill(0),
+      wrongTopics: {}
+    };
+    const saved = loadLS(LS_KEY, fb);
+    // 模組數擴充後，補齊舊版 localStorage 中長度不足的陣列
+    const pad = (arr) => { const x = Array.isArray(arr) ? [...arr] : []; while (x.length < TOTAL) x.push(0); return x.slice(0, TOTAL); };
+    return {
+      time: pad(saved.time), clicks: pad(saved.clicks),
+      quizCorrect: pad(saved.quizCorrect), quizTotal: pad(saved.quizTotal),
+      cardsRead: pad(saved.cardsRead), cardsTotal: pad(saved.cardsTotal),
+      wrongTopics: saved.wrongTopics || {}
+    };
+  });
   const contentRef = useRef(null);
   const menuRef = useRef(null);
   const t = dict[lang];
@@ -1101,6 +1257,8 @@ function App() {
     { id:2, icon:'🤖', title:t.m2_nav },
     { id:3, icon:'🔄', title:t.m3_nav },
     { id:4, icon:'⚡', title:t.m4_nav },
+    { id:5, icon:'🧩', title:t.m5_nav },
+    { id:6, icon:'🔍', title:t.m6_nav },
     { id:IDX_LAB, icon:'🧪', title:t.mlab_nav },
     { id:IDX_RES, icon:'🌐', title:t.mres_nav },
     { id:IDX_ANA, icon:'📊', title:t.analytics_nav }
@@ -1324,6 +1482,8 @@ function App() {
                 {module===2 && <SquadDiagram lang={lang}/>}
                 {module===3 && <PipelineDiagram lang={lang}/>}
                 {module===4 && <TemplateDiagram lang={lang}/>}
+                {module===5 && <AgentAnatomyDiagram lang={lang}/>}
+                {module===6 && <ReviewAgentDiagram lang={lang}/>}
               </div>
               <FlipCardDeck key={`cards-${module}`} terms={t[`m${module}_terms`]} t={t} moduleId={module} onCardRead={handleCardRead} />
               <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-5">
