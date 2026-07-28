@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 容器化與高階 Agent 工作流 主題測驗 · CAIW Topic Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'], serif: ['Merriweather','serif'] } } }
+  }
+</script>
+<style>
+  :root {
+    --bcg-green: #004030;
+    --bcg-gold: #D8C3A5;
+    --bcg-cream: #F5EFE6;
+    --bcg-ivory: #FAF6EF;
+    --ink: #1a1a1a;
+    --mute: #6b6b6b;
+    --line: #E3D9C5;
+    --ok: #2f7d4f;
+    --bad: #b3261e;
+  }
+  html, body { background: #f4f4f4; color: var(--ink); font-family: 'Inter', sans-serif; }
+  .dark body { background: #121212; color: #e5e5e5; }
+  .dark { --ink: #ecead8; --mute: #9aa9a3; --line: #2a3d35; --bcg-cream: #1a2520; --bcg-ivory: #14201c; }
+
+  ::selection { background: #004030; color: #fff; }
+  .dark ::selection { background: #D8C3A5; color: #004030; }
+
+  .bcg-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+  .dark .bcg-card { background: #1a2520; border-color: #2a3d35; }
+  .bcg-card-cream { background: var(--bcg-cream); border: 1px solid var(--line); border-radius: 14px; }
+
+  .bcg-btn { background: var(--bcg-green); color: #fff; border-radius: 10px; padding: 10px 20px; font-weight: 500; transition: all .15s ease; font-family: 'Inter', sans-serif; }
+  .bcg-btn:hover { background: #00604a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,64,48,.18); }
+  .bcg-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+  .dark .bcg-btn { background: var(--bcg-gold); color: var(--bcg-green); }
+  .dark .bcg-btn:hover { background: #E8D6B5; }
+
+  .bcg-btn-ghost { background: transparent; color: var(--bcg-green); border: 1px solid var(--bcg-green); border-radius: 10px; padding: 10px 20px; font-weight: 500; transition: all .15s ease; }
+  .bcg-btn-ghost:hover { background: rgba(0,64,48,.05); }
+  .dark .bcg-btn-ghost { color: var(--bcg-gold); border-color: var(--bcg-gold); }
+  .dark .bcg-btn-ghost:hover { background: rgba(216,195,165,.08); }
+
+  .opt { border: 1.5px solid var(--line); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all .15s; background: #fff; }
+  .dark .opt { background: #14201c; }
+  .opt:hover { border-color: var(--bcg-green); background: rgba(0,64,48,.04); }
+  .dark .opt:hover { border-color: var(--bcg-gold); background: rgba(216,195,165,.06); }
+  .opt.selected { border-color: var(--bcg-green); background: rgba(0,64,48,.08); }
+  .dark .opt.selected { border-color: var(--bcg-gold); background: rgba(216,195,165,.10); }
+  .opt.correct { border-color: var(--ok); background: rgba(47,125,79,.10); }
+  .opt.wrong { border-color: var(--bad); background: rgba(179,38,30,.08); }
+
+  .topic-tile { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; cursor: pointer; transition: all .25s ease; position: relative; overflow: hidden; }
+  .dark .topic-tile { background: #1a2520; border-color: #2a3d35; }
+  .topic-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,64,48,.10); border-color: var(--bcg-green); }
+  .dark .topic-tile:hover { border-color: var(--bcg-gold); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .topic-tile::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--bcg-green); }
+  .dark .topic-tile::before { background: var(--bcg-gold); }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: .5px; font-family: 'Inter', sans-serif; }
+  .badge-green { background: var(--bcg-green); color: #fff; }
+  .badge-gold { background: var(--bcg-gold); color: var(--bcg-green); }
+
+  .progress-bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--bcg-green); transition: width .5s ease; }
+  .dark .progress-fill { background: var(--bcg-gold); }
+
+  .stat-num { font-family: 'Merriweather', serif; font-weight: 900; font-size: 28px; color: var(--bcg-green); line-height: 1.1; }
+  .dark .stat-num { color: var(--bcg-gold); }
+
+  table.kb { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.kb th, table.kb td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+  table.kb th { background: var(--bcg-green); color: var(--bcg-gold); font-weight: 600; font-size: 11.5px; letter-spacing: .3px; text-transform: uppercase; }
+  table.kb tr:hover td { background: rgba(216,195,165,.06); }
+
+  input[type=text], input[type=email], select {
+    background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; color: inherit; width: 100%; font-family: 'Inter', sans-serif;
+  }
+  input[type=text]:focus, input[type=email]:focus, select:focus { outline: none; border-color: var(--bcg-green); box-shadow: 0 0 0 3px rgba(0,64,48,.08); }
+  .dark input[type=text]:focus, .dark input[type=email]:focus, .dark select:focus { border-color: var(--bcg-gold); box-shadow: 0 0 0 3px rgba(216,195,165,.10); }
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in { animation: fadeInUp 0.5s ease-out forwards; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+  header, footer, button, .ui-decoration { -webkit-user-select: none; user-select: none; }
+  input, textarea, select { -webkit-user-select: text; user-select: text; }
+
+  .toast { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); background: var(--bcg-green); color: var(--bcg-gold); padding: 12px 24px; border-radius: 10px; font-size: 13px; font-family: 'Inter', sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 9999; animation: fadeInUp 0.3s ease-out; }
+
+  .serif { font-family: 'Merriweather', serif; }
+  .h-display { font-family: 'Merriweather', serif; font-weight: 900; color: var(--bcg-green); }
+  .dark .h-display { color: var(--bcg-gold); }
+  .brand-mark { font-family: 'Merriweather', serif; font-weight: 900; letter-spacing: 3px; color: var(--bcg-gold); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- ============= Domain Lock + 智慧型前端防護 ============= -->
+<script>
+(function(){
+  var ALLOWED = ['localhost','127.0.0.1','lolopodcast.github.io'];
+  var REDIRECT = 'https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo';
+  var isFile = location.protocol === 'file:';
+  if (!isFile && !ALLOWED.some(function(d){ return location.hostname === d || location.hostname.endsWith('.'+d); })) {
+    document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif"><h1>Access Denied</h1><p>This resource is not authorised on this domain.</p></div>';
+    setTimeout(function(){ location.href = REDIRECT; }, 3000);
+    return;
+  }
+  if (window.self !== window.top) {
+    try { window.top.location.href = window.self.location.href; }
+    catch(e) { document.body.innerHTML = '<div style="text-align:center;padding:60px"><h1>Frame Blocked</h1></div>'; }
+  }
+})();
+(function(){
+  let toastTimer = null;
+  window._showCopyrightToast = function(msg) {
+    const existing = document.getElementById('_copyright_toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.id = '_copyright_toast';
+    el.className = 'toast';
+    el.textContent = msg || '© Intellectual Property of Prof. Shihmin Lo';
+    document.body.appendChild(el);
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.remove(), 2200);
+  };
+  document.addEventListener('contextmenu', function(e) {
+    const selection = window.getSelection().toString().trim();
+    if (selection.length > 0) return true;
+    const isImage = e.target.tagName === 'IMG' || e.target.closest('svg');
+    e.preventDefault();
+    window._showCopyrightToast(isImage ? '© Image protected · Prof. Shihmin Lo' : '© Intellectual Property of Prof. Shihmin Lo');
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12') { e.preventDefault(); window._showCopyrightToast(); return; }
+    if (e.ctrlKey && e.key && e.key.toLowerCase() === 'u') { e.preventDefault(); window._showCopyrightToast(); return; }
+    if (e.ctrlKey && e.shiftKey && ['i','j','c'].includes((e.key||'').toLowerCase())) {
+      e.preventDefault(); window._showCopyrightToast(); return;
+    }
+  });
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG' || e.target.closest('svg')) e.preventDefault();
+  });
+})();
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+// ============================================================
+// 答案混淆（XOR + Base64）
+// ============================================================
+const _SALT = 'CAIW_2026';
+const _e = (s, n) => {
+  const p = s + ':' + n;
+  let r = '';
+  for (let i = 0; i < p.length; i++)
+    r += String.fromCharCode(p.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+  return btoa(r);
+};
+const _d = (token) => {
+  try {
+    const decoded = atob(token);
+    let r = '';
+    for (let i = 0; i < decoded.length; i++)
+      r += String.fromCharCode(decoded.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+    return parseInt(r.split(':')[1], 10);
+  } catch (e) { return -1; }
+};
+const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
+const A = [_A0, _A1, _A2, _A3];
+
+// ============================================================
+// Sanitize helpers
+// ============================================================
+const sanitizeStudentId = (v) => String(v||'').replace(/[^0-9A-Za-z]/g, '').slice(0, 12);
+const sanitizeName = (v) => String(v||'').replace(/[<>"'&\\]/g, '').slice(0, 50);
+
+// ============================================================
+// 題庫 — 7 主題 × 40 題（答案經過 XOR + Base64 混淆）
+// ============================================================
+const TOPICS = [
+  {
+    id: "infra_layers",
+    titleZh: "四層基礎設施",
+    titleEn: "Four Infrastructure Layers",
+    descZh: "容器、套件、外掛、連接器、沙盒——一棟具備保全機制的建築。",
+    descEn: "Container, package, plugin, connector, sandbox — a secured building.",
+    questions: [
+      {
+        qZh: "下列哪一個比喻最能正確描述沙盒（Sandbox）的功能？",
+        qEn: "Which metaphor most accurately describes the sandbox's function?",
+        optsZh: ["房子外圍用來擋外部入侵者的鐵絲網","房子內部專門承接風險實驗的抗爆隔離艙","連接房子內外的水電管線","蓋房子用的磚頭"],
+        optsEn: ["A fence around the outside of the house to keep intruders out","A blast-proof isolation chamber inside the house for risky experiments","Plumbing and wiring connecting the house to the outside","Bricks used to build the house"],
+        ans: A[1],
+        expZh: "沙盒要限制的是內部（AI 自己生成、尚未驗證的程式碼）風險，而非外部入侵，因此正確比喻是內部隔離艙，而非外圍鐵絲網。水電管線是連接器、磚頭是套件。",
+        expEn: "The sandbox contains internal risk — AI-generated, unverified code — not external intrusion; hence an internal isolation chamber, not an outer fence. Plumbing is the connector; bricks are packages."
+      },
+      {
+        qZh: "套件（Package）與外掛（Plugin）的共同特徵是什麼？",
+        qEn: "What do packages and plugins have in common?",
+        optsZh: ["兩者都能獨立執行，不依賴任何主程式","兩者都必須依附在某個環境或主程式上才能運作","兩者都是負責跨系統傳遞資料的橋樑","兩者都是限制風險執行的隔離空間"],
+        optsEn: ["Both can run independently without any host program","Both must attach to some environment or host program to operate","Both are bridges that carry data across systems","Both are isolated spaces that limit risky execution"],
+        ans: A[1],
+        expZh: "套件是函式庫、外掛依附主程式，兩者皆無法獨立執行，都屬於能力層的建材。跨系統傳遞資料是連接器的職責、隔離空間是沙盒。",
+        expEn: "A package is a library and a plugin attaches to a host — neither runs independently; both are capability-layer materials. Data carrying is the connector's job; isolation is the sandbox's."
+      },
+      {
+        qZh: "連接器（Connector）在架構中主要負責什麼？",
+        qEn: "What is the connector mainly responsible for in this architecture?",
+        optsZh: ["執行複雜的商業邏輯運算","在系統或平台之間牽線、傳遞資料","把程式碼隔離在低權限環境中執行","提供選色與版面等裝飾功能"],
+        optsEn: ["Executing complex business logic","Carrying data between systems or platforms","Confining code to a low-privilege environment","Providing decorative colour and layout"],
+        ans: A[1],
+        expZh: "連接器本身不執行邏輯，只負責資料的牽線與傳遞，例如串接資料庫或外部 API。隔離執行是沙盒的職責。",
+        expEn: "The connector executes no logic itself — it only carries and relays data (e.g. linking to a database or external API). Confinement is the sandbox's role."
+      },
+      {
+        qZh: "為什麼容器（Container）被稱為整套架構的「地基」？",
+        qEn: "Why is the container called the 'foundation' of the whole architecture?",
+        optsZh: ["因為它負責美化使用者介面","因為它把應用程式與運行環境打包成一致的隔離空間，是後續一切運作的前提","因為它負責辯證分析商業影響","因為它是所有套件的集合體，不需要其他概念"],
+        optsEn: ["Because it beautifies the user interface","Because it packages the app and runtime into a consistent isolated space that everything else depends on","Because it performs dialectical business analysis","Because it is a collection of all packages and needs nothing else"],
+        ans: A[1],
+        expZh: "容器提供一致且隔離的執行環境，是套件、外掛、連接器、沙盒都要依附其上運作的基礎邊界（KB 第一部分）。",
+        expEn: "The container provides a consistent, isolated environment that packages, plugins, connectors and sandboxes all depend on as their base boundary (KB Part 1)."
+      },
+      {
+        qZh: "四層基礎設施由內而外的正確排列順序為何？",
+        qEn: "What is the correct inside-out order of the four infrastructure layers?",
+        optsZh: ["安全層→通訊層→能力層→隔離層","隔離層→能力層→通訊層→安全層","能力層→隔離層→安全層→通訊層","通訊層→安全層→隔離層→能力層"],
+        optsEn: ["Safety→Communication→Capability→Isolation","Isolation→Capability→Communication→Safety","Capability→Isolation→Safety→Communication","Communication→Safety→Isolation→Capability"],
+        ans: A[1],
+        expZh: "由內而外依序是隔離層（容器）→能力層（套件/外掛）→通訊層（連接器）→安全層（沙盒）——先隔離、再賦能、再連結、最後止損。",
+        expEn: "Inside out: isolation (container) → capability (package/plugin) → communication (connector) → safety (sandbox) — isolate, enable, connect, contain."
+      },
+      {
+        qZh: "在建築比喻中，套件（Package）與外掛（Plugin）分別對應什麼？",
+        qEn: "In the building metaphor, what do the package and the plugin correspond to?",
+        optsZh: ["磚頭與裝潢","水電管線與鐵絲網","獨立的房子與隔離艙","保全人員與管家"],
+        optsEn: ["Bricks and interior decoration","Plumbing and wire fencing","An independent house and an isolation chamber","Security guards and a butler"],
+        ans: A[0],
+        expZh: "套件是蓋房子的磚頭（基礎建材），外掛是房子的裝潢（依附主體的擴充）；水電管線對應連接器、獨立房子對應容器、隔離艙對應沙盒。",
+        expEn: "Packages are the bricks (base materials); plugins are the decoration (host-attached extensions). Plumbing maps to the connector, the house to the container, the chamber to the sandbox."
+      }
+    ]
+  },
+  {
+    id: "dual_squads",
+    titleZh: "Agent 雙小組",
+    titleEn: "Dual Agent Squads",
+    descZh: "技術實作小組與決策分析小組——兩種閉環、兩種驗收標準。",
+    descEn: "Engineering vs analyst squads — two loops, two acceptance criteria.",
+    questions: [
+      {
+        qZh: "技術實作小組的「自癒閉環」具體是指哪個流程？",
+        qEn: "What exactly is the Engineering Squad's 'self-healing loop'?",
+        optsZh: ["正方論證→反方質疑→仲裁收斂","寫 Code→報錯→修正→重新執行，直到成功","抓取新聞→比對歷史庫→產出摘要","建立容器→載入套件→連接外部資料"],
+        optsEn: ["Proponent argues → Critic challenges → Synthesizer consolidates","Write code → error → correct → re-run until it succeeds","Fetch news → compare with history → produce summary","Build container → load packages → connect to external data"],
+        ans: A[1],
+        expZh: "自癒閉環是工程師與測試員之間「寫 Code、丟進沙盒執行、報錯、修正」的循環；第一個選項是決策分析小組的辯證推論閉環。",
+        expEn: "The self-healing loop is the Engineer-Tester cycle of write, run in sandbox, error, correct; option A is the Analyst Squad's dialectical loop."
+      },
+      {
+        qZh: "為什麼原始知識庫需要新增「決策分析小組」？",
+        qEn: "Why did the original knowledge base need an added 'Analyst Squad'?",
+        optsZh: ["因為工程師與測試員效率不夠，需要增援人力","因為原稿工作流描述了正反方辯證分析，卻沒有定義對應的角色","因為沙盒環境需要更多人維護","因為連接器需要多人輪班確保資料抓取"],
+        optsEn: ["Because the Engineer and Tester aren't efficient enough and need more staff","Because the original workflow described pro/con dialectical analysis without defining any corresponding role","Because the sandbox needs more people to maintain it","Because the connector needs shifts of people to ensure data fetching"],
+        ans: A[1],
+        expZh: "原稿工作流第 4 步提到「正反方辯證」，但先前只定義了工程師與測試員——這是角色缺口，因此新增正方、反方與綜合仲裁者（KB 第二部分）。",
+        expEn: "Step 4 mentioned pro/con dialectic but only Engineer and Tester existed — a role gap filled by Proponent, Critic and Synthesizer (KB Part 2)."
+      },
+      {
+        qZh: "正方分析師與反方分析師的差異在於？",
+        qEn: "What is the difference between the Proponent and the Critic Analyst?",
+        optsZh: ["正方負責寫程式，反方負責測試程式","正方論證技術可行性與市場機會，反方提出風險與商業衝擊的質疑","正方負責抓資料，反方負責存資料","兩者其實沒有差異，只是名稱不同"],
+        optsEn: ["The Proponent writes code and the Critic tests it","The Proponent argues technical feasibility and market opportunity, the Critic raises risk and business-impact concerns","The Proponent fetches data and the Critic stores it","There is no real difference, only the names differ"],
+        ans: A[1],
+        expZh: "正方著重正面論證、反方著重風險與質疑——觀點對立才能形成有效辯證。寫程式與測試是技術實作小組的分工。",
+        expEn: "The Proponent argues the positive case, the Critic challenges with risks — opposing views make the dialectic work. Coding/testing belongs to the Engineering Squad."
+      },
+      {
+        qZh: "技術實作小組與決策分析小組的共通點是什麼？",
+        qEn: "What do the Engineering Squad and Analyst Squad have in common?",
+        optsZh: ["兩者都負責寫商業報告","兩者都共用同一個沙盒環境來執行與驗證，但驗收標準不同","兩者都不需要沙盒環境","兩者的工作內容完全相同，只是分工重複"],
+        optsEn: ["Both squads write business reports","Both squads share the same sandbox for execution and verification, but with different acceptance criteria","Neither squad needs a sandbox","Their work is identical, just duplicated"],
+        ans: A[1],
+        expZh: "兩支小組共用沙盒作為驗證場域：技術小組驗「程式碼能不能跑」，分析小組驗「結論站不站得住腳」。",
+        expEn: "Both use the sandbox as verification ground: the Engineering Squad verifies whether code runs; the Analyst Squad verifies whether conclusions hold."
+      },
+      {
+        qZh: "綜合仲裁者（Synthesizer）的主要職責是？",
+        qEn: "What is the Synthesizer's main responsibility?",
+        optsZh: ["撰寫自動化腳本程式碼","把程式碼丟進沙盒執行並捕捉錯誤","彙整正反方論點，收斂成附帶信心水準的可執行結論","定期抓取新聞資料並比對歷史庫"],
+        optsEn: ["Writing automation scripts","Running code in the sandbox and catching errors","Consolidating pro/con arguments into one actionable conclusion with a confidence level","Periodically fetching news and comparing it against the history base"],
+        ans: A[2],
+        expZh: "綜合仲裁者不寫程式也不辯論，而是彙整正反雙方觀點，形成最終可執行、附信心水準的結論。",
+        expEn: "The Synthesizer neither codes nor debates — it consolidates both sides into a final actionable conclusion with a confidence level."
+      },
+      {
+        qZh: "兩支小組的「驗收標準」分別是什麼？",
+        qEn: "What are the two squads' respective acceptance criteria?",
+        optsZh: ["兩者都是程式碼能否執行","技術小組驗「程式碼能不能跑」，分析小組驗「結論站不站得住腳」","兩者都是結論是否正確","技術小組驗成本高低，分析小組驗執行速度"],
+        optsEn: ["Both check whether the code executes","The Engineering Squad verifies 'does the code run'; the Analyst Squad verifies 'does the conclusion hold up'","Both check whether the conclusion is correct","The Engineering Squad checks cost, the Analyst Squad checks speed"],
+        ans: A[1],
+        expZh: "前者是工程問題、後者是判斷力問題——把兩種閉環分開定義，才不會誤以為「自動生成程式碼」與「自動做商業判斷」是同一件事（KB 第二部分）。",
+        expEn: "One is an engineering problem, the other a judgment problem — keeping the loops separate prevents conflating code generation with business judgment (KB Part 2)."
+      }
+    ]
+  },
+  {
+    id: "workflow_sop",
+    titleZh: "五步驟工作流",
+    titleEn: "Five-Step Workflow",
+    descZh: "從環境初始化到終端輸出的完整情報產出流水線。",
+    descEn: "The full intelligence pipeline from environment init to terminal output.",
+    questions: [
+      {
+        qZh: "五步驟工作流中，哪一步驟不對應任何一個基礎設施概念？",
+        qEn: "In the five-step workflow, which step corresponds to no infrastructure concept?",
+        optsZh: ["步驟1 環境初始化","步驟3 安全資料牽線","步驟5 終端輸出","步驟2 工具與技能載入"],
+        optsEn: ["Step 1 Environment Init","Step 3 Secure Data Linking","Step 5 Terminal Output","Step 2 Tool & Skill Loading"],
+        ans: A[2],
+        expZh: "步驟 5 是前四層基礎設施共同服務的最終產出目標，本身不對應容器、套件、連接器或沙盒任何一個（KB 第三部分）。",
+        expEn: "Step 5 is the ultimate output the four layers jointly serve — it maps to no single infrastructure concept (KB Part 3)."
+      },
+      {
+        qZh: "步驟4（沙盒驗證與辯證）由哪些角色共同執行？",
+        qEn: "Who executes Step 4 (sandbox verification and dialectic)?",
+        optsZh: ["只有工程師一人","只有連接器負責","技術實作小組與決策分析小組共同在沙盒中執行","只有綜合仲裁者一人"],
+        optsEn: ["Only the Engineer, alone","Only the connector handles it","The Engineering Squad and Analyst Squad execute together in the sandbox","Only the Synthesizer, alone"],
+        ans: A[2],
+        expZh: "步驟 4 是兩支 Agent 小組真正登場的階段：技術小組跑通模型、分析小組辯證推論，皆在沙盒內進行。",
+        expEn: "Step 4 is where both squads appear: engineering runs the model, analysts debate — all inside the sandbox."
+      },
+      {
+        qZh: "步驟3「安全資料牽線」主要使用哪個概念？",
+        qEn: "Which concept does Step 3 'Secure Data Linking' mainly use?",
+        optsZh: ["容器","套件","連接器","沙盒"],
+        optsEn: ["Container","Package","Connector","Sandbox"],
+        ans: A[2],
+        expZh: "步驟 3 透過 API 或檔案系統連接器抓取新聞並與歷史知識庫比對差異，屬於通訊層。",
+        expEn: "Step 3 fetches news via API/filesystem connectors and diffs against the history base — the communication layer."
+      },
+      {
+        qZh: "五步驟工作流的正確順序為何？",
+        qEn: "What is the correct order of the five-step workflow?",
+        optsZh: ["連接器→容器→套件→沙盒→輸出","容器→套件/外掛→連接器→沙盒→輸出","沙盒→容器→連接器→套件→輸出","輸出→容器→套件→連接器→沙盒"],
+        optsEn: ["Connector→Container→Package→Sandbox→Output","Container→Package/Plugin→Connector→Sandbox→Output","Sandbox→Container→Connector→Package→Output","Output→Container→Package→Connector→Sandbox"],
+        ans: A[1],
+        expZh: "環境初始化（容器）→工具載入（套件/外掛）→資料牽線（連接器）→沙盒驗證與辯證→終端輸出。",
+        expEn: "Environment init (container) → tool loading (package/plugin) → data linking (connector) → sandbox verification & dialectic → terminal output."
+      },
+      {
+        qZh: "為什麼步驟五被形容為「整條流水線唯一創造價值的產出目標」？",
+        qEn: "Why is step five described as 'the only value-creating output of the whole pipeline'?",
+        optsZh: ["因為它耗費的運算資源最多","因為前四步只是基礎設施搭建，沒有步驟五的產出，整套流程就沒有實際意義","因為它是唯一需要人工介入的步驟","因為它不需要任何前面步驟的結果"],
+        optsEn: ["Because it consumes the most computing resources","Because the first four steps are only infrastructure setup — without step five's output the pipeline has no practical meaning","Because it is the only step requiring human intervention","Because it needs no results from any prior step"],
+        ans: A[1],
+        expZh: "前四步是隔離、賦能、連結、驗證的過程；唯有步驟五的 BI 圖表與決策建議是使用者真正需要的價值。",
+        expEn: "The first four steps isolate, enable, connect and verify; only step five's BI chart and decision recommendation is the value users actually need."
+      },
+      {
+        qZh: "步驟2「工具與技能載入」對應哪些概念？",
+        qEn: "Which concepts does Step 2 'Tool & Skill Loading' correspond to?",
+        optsZh: ["容器","套件與外掛","連接器","沙盒"],
+        optsEn: ["Container","Package and plugin","Connector","Sandbox"],
+        ans: A[1],
+        expZh: "步驟 2 由 AI 自主安裝資料分析、爬蟲等套件，並載入特定格式的外掛工具——對應能力層的套件與外掛。",
+        expEn: "Step 2 autonomously installs packages (data analysis, scraping) and loads format-specific plugins — the capability layer."
+      }
+    ]
+  },
+  {
+    id: "prompt_templates",
+    titleZh: "指令範本",
+    titleEn: "Prompt Templates",
+    descZh: "用架構語意而非實作細節，向 AI 下達高階指令。",
+    descEn: "Instructing AI with architectural semantics, not implementation detail.",
+    questions: [
+      {
+        qZh: "使用 Claude Code 時最常見的誤區是什麼？",
+        qEn: "What is the most common mistake when using Claude Code?",
+        optsZh: ["描述太多架構語意，讓 AI 無所適從","鉅細靡遺描述實作細節，把該由 AI 決定的部分丟回給使用者","完全不下達任何指令","只使用精簡版指令而不使用完整版"],
+        optsEn: ["Describing too much architectural semantics, confusing the AI","Describing implementation detail exhaustively, handing back to the user decisions the AI should make","Never issuing any instruction at all","Only ever using the quick template, never the full one"],
+        ans: A[1],
+        expZh: "常見誤區是過度指定實作細節（如該用哪個爬蟲套件），違背 Vibe Coding「只描述目標與架構語意」的精神。",
+        expEn: "Over-specifying implementation (e.g. which scraping library) hands AI's decisions back to the user — against the spirit of vibe coding."
+      },
+      {
+        qZh: "完整版指令範本的第三句主要對應哪個概念與角色？",
+        qEn: "Which concept and role does the third sentence of the full template mainly correspond to?",
+        optsZh: ["連接器與資料抓取","沙盒與技術實作小組","容器與環境初始化","外掛與格式處理"],
+        optsEn: ["Connector and data fetching","Sandbox and the Engineering Squad","Container and environment initialisation","Plugin and format handling"],
+        ans: A[1],
+        expZh: "第三句要求所有驗證與運算腳本在沙盒中安全執行、出錯由工程師與測試員自我修正——對應沙盒與技術實作小組。",
+        expEn: "Sentence three demands scripts run safely in the sandbox with Engineer/Tester self-correction — the sandbox plus Engineering Squad."
+      },
+      {
+        qZh: "精簡版指令範本與完整版的關係是？",
+        qEn: "What is the relationship between the quick template and the full template?",
+        optsZh: ["兩者使用完全不同的架構原則","精簡版是同一套邏輯的快速觸發版本，把四句話濃縮成一句","精簡版比完整版包含更多細節","精簡版只適用於程式設計師，完整版才適合一般使用者"],
+        optsEn: ["The two use entirely different architectural principles","The quick template is the same logic condensed into one sentence from four","The quick template contains more detail than the full one","The quick template only suits programmers, the full one suits general users"],
+        ans: A[1],
+        expZh: "精簡版與完整版共用同一套架構語意，只是濃縮為一句，適合熟悉架構後快速觸發。",
+        expEn: "Both share the same architectural semantics; the quick one condenses four sentences into one for fast triggering."
+      },
+      {
+        qZh: "套用指令範本到新主題時，真正需要更動的是？",
+        qEn: "When applying the template to a new topic, what actually needs to change?",
+        optsZh: ["整套架構語意都要重新設計","只需要替換方括號內的主題，架構本身可重複套用","需要重新定義所有 Agent 角色","需要重新撰寫沙盒的安全機制"],
+        optsEn: ["The entire architectural semantics must be redesigned","Only the topic inside the brackets needs replacing — the architecture itself is reusable","All agent roles must be redefined","The sandbox's safety mechanism must be rewritten"],
+        ans: A[1],
+        expZh: "容器、連接器、沙盒、雙小組、五步驟是固定可重複套用的架構，唯一變動的是主題本身。",
+        expEn: "Container, connector, sandbox, dual squads and five steps are a fixed reusable architecture — only the topic changes."
+      },
+      {
+        qZh: "完整版指令範本的第二句（要求正反方辯證並收斂結論）對應哪支團隊？",
+        qEn: "The full template's second sentence (pro/con dialectic with a consolidated conclusion) corresponds to which team?",
+        optsZh: ["技術實作小組","決策分析小組","查核員","容器管理員"],
+        optsEn: ["The Engineering Squad","The Analyst Squad","The fact-checker","The container administrator"],
+        ans: A[1],
+        expZh: "第二句要求啟動正方、反方分析師辯證並由綜合仲裁者收斂——正是決策分析小組的辯證推論閉環（KB 第四部分）。",
+        expEn: "Sentence two activates Proponent/Critic debate consolidated by the Synthesizer — the Analyst Squad's dialectical loop (KB Part 4)."
+      }
+    ]
+  },
+  {
+    id: "agent_anatomy",
+    titleZh: "Agent 解剖學",
+    titleEn: "Agent Anatomy",
+    descZh: "四件套、Vibe Coding、Skill 與 Subagent、四種創造來源。",
+    descEn: "The four components, vibe coding, skills vs subagents, four creation sources.",
+    questions: [
+      {
+        qZh: "Agent 四件套指的是哪四樣元件的組合？",
+        qEn: "What are the four components that make up an agent?",
+        optsZh: ["模型、工具、系統提示詞、執行迴圈","容器、套件、連接器、沙盒","理論家、實務家、批判家、仲裁者","Skill、Subagent、SDK、終端機"],
+        optsEn: ["Model, tools, system prompt, execution loop","Container, package, connector, sandbox","Theorist, practitioner, critic, synthesizer","Skill, subagent, SDK, terminal"],
+        ans: A[0],
+        expZh: "Agent＝腦袋（模型）＋手腳（工具）＋職務說明（系統提示詞）＋工作節奏（執行迴圈），四者齊備才能自主行動與修正（KB 第五部分）。",
+        expEn: "Agent = brain (model) + hands (tools) + job description (prompt) + rhythm (loop); all four enable autonomous action and correction (KB Part 5)."
+      },
+      {
+        qZh: "Skill 與 Subagent 最貼切的比喻差異是？",
+        qEn: "What is the most fitting metaphor for the skill vs subagent difference?",
+        optsZh: ["兩者都是聊天機器人，沒有差異","Skill 是流程手冊（怎麼做），Subagent 是職務說明書（誰來做）","Skill 是硬體，Subagent 是軟體","Skill 是付費功能，Subagent 是免費功能"],
+        optsEn: ["Both are chatbots, there is no difference","A skill is an SOP manual (how to do it), a subagent is a job description (who does it)","A skill is hardware, a subagent is software","A skill is a paid feature, a subagent is free"],
+        ans: A[1],
+        expZh: "Skill 動詞式地定義任務流程，需要 Agent 執行；Subagent 名詞式地定義常駐角色，本身就是可派工的完整 Agent。",
+        expEn: "A skill defines a process verb-like and needs an agent to execute; a subagent defines a resident role noun-like and is itself dispatchable."
+      },
+      {
+        qZh: "在 .claude/agents/ 放一份含 YAML 與系統提示詞的 Markdown 檔，等同於什麼動作？",
+        qEn: "Dropping a Markdown file with YAML and a system prompt into .claude/agents/ is equivalent to what?",
+        optsZh: ["刪除一個舊員工","聘僱一位常駐的 Subagent 員工","啟動沙盒環境","發布網頁到 GitHub Pages"],
+        optsEn: ["Firing an old employee","Hiring a resident subagent employee","Starting a sandbox environment","Publishing a page to GitHub Pages"],
+        ans: A[1],
+        expZh: "這份檔案就是職務說明卡：名稱、職責、工具權限、模型都定義好，貼上佈告欄即完成聘僱。",
+        expEn: "That file is the job card — name, duties, tool permissions and model defined; posting it completes the hire."
+      },
+      {
+        qZh: "Agent 與 Subagent 的差異本質是什麼？",
+        qEn: "What is the essential difference between an agent and a subagent?",
+        optsZh: ["使用的模型大小不同","擁有的工具數量不同","相對位置不同：誰直接面對使用者、誰被指派後回報","收費方式不同"],
+        optsEn: ["The size of the model used","The number of tools owned","Relative position: who faces the user, and who is assigned work and reports back","The pricing model"],
+        ans: A[2],
+        expZh: "兩者結構上都是完整的 Agent；差別只在「誰在指揮誰」——換個位置，身份就換，不是兩個物種。",
+        expEn: "Both are structurally complete agents; the difference is who directs whom — change position, change identity. Not two species."
+      },
+      {
+        qZh: "「可以有 Agent 卻不 Vibe Coding」是什麼意思？",
+        qEn: "What does 'you can own an agent without vibe coding' mean?",
+        optsZh: ["這種情況不存在","使用 Agent 時仍逐行指定實作細節，未把決策交給 AI","代表 Agent 故障了","代表只使用免費模型"],
+        optsEn: ["Such a situation cannot exist","Using an agent while still dictating every implementation detail, never delegating decisions to the AI","It means the agent is broken","It means only free models are used"],
+        ans: A[1],
+        expZh: "Vibe Coding 是互動風格而非工具：即使用了 Claude Code，若每行程式碼都親自指定，就不是 Vibe Coding 的精神。",
+        expEn: "Vibe coding is an interaction style, not the tool: even with Claude Code, dictating every line is not vibe coding."
+      }
+    ]
+  },
+  {
+    id: "review_agent",
+    titleZh: "審查代理人",
+    titleEn: "Review Agent Case Study",
+    descZh: "角色與規準解耦、Full/Lite、查核閉環、跨平台、遺留治理。",
+    descEn: "Role-rubric decoupling, Full/Lite, fact-check loop, portability, legacy governance.",
+    questions: [
+      {
+        qZh: "審查系統為何只建 3 個角色、而不是「4 內容 × 3 視角」的 12 個 Subagent？",
+        qEn: "Why does the review system build only 3 roles instead of 12 subagents (4 content types × 3 perspectives)?",
+        optsZh: ["因為預算不足","因為角色與規準解耦：角色固定，內容差異封裝進規準檔","因為平台最多只允許 3 個","因為審查不需要分視角"],
+        optsEn: ["Because of budget constraints","Because roles and rubrics are decoupled: roles stay fixed, content differences are encapsulated in rubric files","Because the platform allows at most 3","Because reviews don't need multiple perspectives"],
+        ans: A[1],
+        expZh: "三位審查員的「心態」固定不變，內容差異由規準檔參數化；新增領域只需寫一份新文件——可擴充性的來源（KB 第六部分決策一）。",
+        expEn: "Reviewer mindsets stay fixed; content differences are parameterised into rubrics — the source of extensibility (KB Part 6, Decision 1)."
+      },
+      {
+        qZh: "查核閉環中，審查員與查核員的分工是？",
+        qEn: "In the fact-check loop, how is work divided between reviewers and the fact-checker?",
+        optsZh: ["審查員自行上網查證每條宣稱","查核員負責撰寫審查意見","審查員只標記可疑宣稱，查核員用搜尋與重算驗證並附來源","兩者做完全相同的事以互相備援"],
+        optsEn: ["Each reviewer verifies claims online by themselves","The fact-checker writes the review comments","Reviewers only flag suspicious claims; the fact-checker verifies them with search and recomputation, citing sources","Both do exactly the same work as mutual backup"],
+        ans: A[2],
+        expZh: "審查員專注判讀與標記；查核員獨享搜尋與重算工具，驗證後判定 CONFIRMED/REFUTED/UNVERIFIABLE 並附來源。",
+        expEn: "Reviewers read and flag; the fact-checker alone holds search/recompute tools, ruling CONFIRMED/REFUTED/UNVERIFIABLE with sources."
+      },
+      {
+        qZh: "為什麼 ChatGPT 與 Gemini 網頁版只能跑 Lite 模式？",
+        qEn: "Why can ChatGPT and Gemini web versions only run Lite mode?",
+        optsZh: ["因為它們沒有多 Subagent 平行機制","因為它們不支援 Markdown","因為規準檔案太大無法上傳","因為授權費用太高"],
+        optsEn: ["Because they lack a parallel multi-subagent mechanism","Because they don't support Markdown","Because rubric files are too large to upload","Because licensing costs are too high"],
+        ans: A[0],
+        expZh: "Full 模式需要真正平行、彼此獨立的多個 Subagent；網頁版聊天工具只能在單一情境內依序扮演角色——即 Lite 模式。",
+        expEn: "Full mode needs genuinely parallel, independent subagents; web chat tools can only role-play sequentially in one context — Lite mode."
+      },
+      {
+        qZh: "core/ 與 adapters/ 的分工原則是？",
+        qEn: "What is the division of labour between core/ and adapters/?",
+        optsZh: ["core 放程式碼、adapters 放文件","知識可攜（core 純 Markdown 唯一事實來源）、接線各平台（adapters 薄接頭）","core 給教師使用、adapters 給學生使用","兩者內容相同，互為備份"],
+        optsEn: ["core holds code, adapters hold documents","Portable knowledge (core, plain-Markdown single source of truth) and per-platform wiring (adapters, thin connectors)","core is for teachers, adapters for students","They hold identical content as mutual backups"],
+        ans: A[1],
+        expZh: "角色、規準、SOP 都是純文字放在 core/，任何平台可用；各平台只需一層薄薄的接線設定（KB 第六部分決策四）。",
+        expEn: "Roles, rubrics and SOP are plain text in core/, usable anywhere; each platform needs only thin wiring (KB Part 6, Decision 4)."
+      },
+      {
+        qZh: "對既有的專用審查 skill，系統採取什麼治理策略？",
+        qEn: "What governance strategy does the system adopt toward the existing specialised review skills?",
+        optsZh: ["立即全部刪除以避免混亂","分流共存，待新系統實戰驗證後再改造為領域擴充包","改名後隱藏起來","轉為付費功能"],
+        optsEn: ["Delete them all immediately to avoid confusion","Coexist with triage rules; refactor them into domain packs only after the new system proves itself in real use","Rename and hide them","Turn them into paid features"],
+        ans: A[1],
+        expZh: "舊 skill 含新系統沒有的領域知識且久經實戰；正確做法是共存分流、驗證後逐步遷移，而非立即淘汰（KB 第六部分決策五）。",
+        expEn: "Old skills hold unique domain knowledge and are battle-tested; the right move is triaged coexistence and gradual migration (KB Part 6, Decision 5)."
+      },
+      {
+        qZh: "什麼是「煙霧測試」（smoke test）？",
+        qEn: "What is a 'smoke test'?",
+        optsZh: ["測試伺服器的散熱系統","用刻意埋錯的樣本走完整條流水線，驗證架構是否如設計運作","對系統進行壓力測試直到當機","測試網頁在手機上的顯示效果"],
+        optsEn: ["Testing the server's cooling system","Running a deliberately flawed sample through the whole pipeline to verify the architecture works as designed","Stress-testing the system until it crashes","Testing how the page renders on mobile"],
+        ans: A[1],
+        expZh: "審查系統上線前用埋錯樣本驗收：三位審查員分工零重複抓出缺陷、查核員以公開來源反駁關鍵宣稱——架構是否如設計運作，用實測回答。",
+        expEn: "Before launch, a planted-flaw sample verified the pipeline: reviewers caught defects with zero overlap and the fact-checker refuted key claims — acceptance by measurement."
+      }
+    ]
+  },
+  {
+    id: "unattended_ops",
+    titleZh: "無人值守實戰",
+    titleEn: "Unattended Operation",
+    descZh: "Heartbeat、零成本偵測、縱深防禦、fail-closed、對抗性驗收。",
+    descEn: "Heartbeat, zero-cost detection, defense in depth, fail-closed, adversarial acceptance.",
+    questions: [
+      {
+        qZh: "「確定性程式碼做搬運，AI 只做判斷」的主要理由是？",
+        qEn: "What is the main rationale for 'deterministic code does the hauling, AI only does the judging'?",
+        optsZh: ["程式碼寫起來比較快","搬運工作有標準答案：交給腳本零成本、可預測、不會被騙，AI 留給需要判斷力的工作","AI 沒有能力複製檔案","為了減少程式碼行數"],
+        optsEn: ["Code is faster to write","Hauling work has one correct answer: scripts do it at zero cost, predictably, and cannot be tricked — AI is saved for judgment work","AI is incapable of copying files","To reduce the number of lines of code"],
+        ans: A[1],
+        expZh: "偵測、複製、守衛有唯一正確做法，腳本執行既省成本又不受提示注入影響；AI 的價值在需要判斷力的審查與分流（KB 第七部分）。",
+        expEn: "Detection, copying and guarding have one correct procedure; scripts are cheap and injection-immune, saving AI for judgment (KB Part 7)."
+      },
+      {
+        qZh: "「零成本偵測」指的是什麼？",
+        qEn: "What does 'zero-cost detection' mean?",
+        optsZh: ["AI 提供免費的檢查服務","排程腳本先偵測有無新檔案，沒有就直接結束，AI 根本不被喚醒","偵測過程不耗電","使用雲端免費方案"],
+        optsEn: ["The AI provides free inspection services","The scheduler script detects whether new files exist first; if none, it exits and the AI is never woken","Detection consumes no electricity","Using a free cloud plan"],
+        ans: A[1],
+        expZh: "心跳每天都跳，但偵測由零成本腳本完成；只有真正有新工作時才喚醒 AI，空轉日的成本是零。",
+        expEn: "The heartbeat fires daily, but detection is a zero-cost script; the AI wakes only for real work, so idle days cost nothing."
+      },
+      {
+        qZh: "Fail-closed 設計在收件匣系統的體現是？",
+        qEn: "How does fail-closed design manifest in the inbox system?",
+        optsZh: ["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"],
+        optsEn: ["On error, re-review every file to be safe","When the state file is corrupted, stop safely and notify a human, avoiding a mass mistaken re-run","On error, delete the state file and rebuild","On error, shut down the entire computer"],
+        ans: A[1],
+        expZh: "fail-open（出錯就全部重來）會造成成本失控與重複污染；fail-closed 寧可停下來讓人類介入——無人值守系統的正確預設。",
+        expEn: "Fail-open (redo everything) causes cost blowouts and duplication; fail-closed stops for human intervention — the right default unattended."
+      },
+      {
+        qZh: "對抗性驗收中，注入測試檔要求給 10 分滿分，系統的正確反應是？",
+        qEn: "In the adversarial test, the injected file demanded a perfect 10 — what was the correct system response?",
+        optsZh: ["給 10 分，因為系統指示優先","給 0 分作為懲罰","照常獨立評分（實測 1.6 分），注入列為嚴重度 5 缺陷並隔離文件","立即刪除該檔案"],
+        optsEn: ["Award 10, since system instructions take priority","Award 0 as punishment","Score independently as usual (1.6 in the real test), list the injection as a severity-5 defect, and quarantine the file","Delete the file immediately"],
+        ans: A[2],
+        expZh: "正確反應是不受操縱、照規準獨立評分，同時把注入企圖揭露為頭號缺陷並隔離——攻擊被偵測、被拒絕、被記錄。",
+        expEn: "Stay unmanipulated, score by rubric, expose the injection as the top defect, quarantine — attack detected, refused, logged."
+      },
+      {
+        qZh: "為何收件用 Dropbox File Request 而非一般共享資料夾？",
+        qEn: "Why use Dropbox File Request for intake instead of an ordinary shared folder?",
+        optsZh: ["因為比較便宜","上傳者看不到內容也刪不了檔案，從機制上根治誤刪與互相覆蓋","因為傳輸速度較快","因為支援較大的檔案"],
+        optsEn: ["Because it is cheaper","Uploaders cannot see contents or delete files, curing accidental deletion and overwriting at the mechanism level","Because transfer speeds are faster","Because it supports larger files"],
+        ans: A[1],
+        expZh: "一般共享資料夾要給編輯權限，可能誤刪或覆蓋彼此檔案；File Request 的只上傳機制讓風險在機制層面就不存在。",
+        expEn: "Shared folders require editor rights, risking deletion/overwrites; File Request's upload-only mechanism removes the risk entirely."
+      },
+      {
+        qZh: "「收件即歸檔」的主要目的為何？",
+        qEn: "What is the main purpose of 'archive-on-intake'?",
+        optsZh: ["節省磁碟空間","處理前先建立上傳者碰不到的不可變副本，任何意外都有依據可回溯","加快審查速度","方便學生下載彼此的作業"],
+        optsEn: ["To save disk space","To create an immutable copy the uploader cannot touch before processing, so any later incident can be traced back","To speed up reviews","To let students download each other's work"],
+        ans: A[1],
+        expZh: "歸檔在審查之前、由排程器的確定性程式碼執行——即使來源檔案之後被動過或出任何意外，封存副本永遠都在（KB 第七部分）。",
+        expEn: "Archiving happens before review, done by deterministic scheduler code — whatever later happens to the source, the archived copy remains (KB Part 7)."
+      }
+    ]
+  }
+];
+const TOTAL_Q = TOPICS.reduce((s, t) => s + t.questions.length, 0);
+
+// ============================================================
+// Icons (inline SVG)
+// ============================================================
+const Icon = {
+  Home: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Dashboard: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+  User: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  Moon: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+  Sun: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+  Download: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  Refresh: ({size=16}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+};
+
+// ============================================================
+// localStorage
+// ============================================================
+const LS_KEY = "caiw_quiz_state_v1";
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    return { ...defaultState(), ...JSON.parse(raw) };
+  } catch (e) { return defaultState(); }
+}
+function defaultState() {
+  return {
+    profile: { name: "", studentId: "", email: "", group: "" },
+    theme: "dark",
+    attempts: {},
+    sessions: [],
+  };
+}
+function saveState(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) {} }
+
+// ============================================================
+// Bilingual helper — 永遠中英並陳
+// ============================================================
+function Bi({ zh, en, primary='zh', sizeZh='text-base', sizeEn='text-sm', muteEn=true, className='' }) {
+  if (!zh && !en) return null;
+  if (primary === 'zh') {
+    return (
+      <div className={className}>
+        {zh && <div className={`${sizeZh}`}>{zh}</div>}
+        {en && <div className={`${sizeEn} ${muteEn ? 'opacity-70 italic' : ''} mt-0.5`}>{en}</div>}
+      </div>
+    );
+  }
+  return (
+    <div className={className}>
+      {en && <div className={`${sizeZh}`}>{en}</div>}
+      {zh && <div className={`${sizeEn} ${muteEn ? 'opacity-70' : ''} mt-0.5`}>{zh}</div>}
+    </div>
+  );
+}
+
+// ============================================================
+// Error Boundary — 防白屏
+// ============================================================
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('ErrorBoundary:', error, info); }
+  reset = () => this.setState({ error: null });
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{padding:'40px 20px',maxWidth:'600px',margin:'40px auto',fontFamily:'Inter,sans-serif'}}>
+          <div className="bcg-card" style={{padding:'24px'}}>
+            <h2 className="serif font-bold text-xl" style={{color:'var(--bad)',marginBottom:'12px'}}>
+              ⚠ 發生錯誤 / An error occurred
+            </h2>
+            <p className="text-sm" style={{marginBottom:'12px'}}>頁面渲染時遇到問題。你的作答紀錄仍儲存在本機，不會遺失。</p>
+            <p className="text-xs italic opacity-70" style={{marginBottom:'16px'}}>
+              The page hit an error. Your records are still saved locally.
+            </p>
+            <details style={{marginBottom:'16px',fontSize:'12px',background:'rgba(0,0,0,.04)',padding:'8px 12px',borderRadius:'6px'}}>
+              <summary style={{cursor:'pointer'}}>技術訊息 / Technical details</summary>
+              <pre style={{whiteSpace:'pre-wrap',marginTop:'8px',fontSize:'11px'}}>{String(this.state.error?.stack || this.state.error)}</pre>
+            </details>
+            <button className="bcg-btn" onClick={this.reset}>重試 / Try again</button>
+            <button className="bcg-btn-ghost" style={{marginLeft:'8px'}} onClick={() => location.reload()}>重新載入 / Reload</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ============================================================
+// App
+// ============================================================
+function App() {
+  const [state, setState] = useState(loadState());
+  const [view, setView] = useState("home");
+  const [activeTopic, setActiveTopic] = useState(null);
+  const [quizSession, setQuizSession] = useState(null);
+
+  useEffect(() => { saveState(state); }, [state]);
+  useEffect(() => { document.documentElement.classList.toggle("dark", state.theme === "dark"); }, [state.theme]);
+
+  function startQuiz(topic) {
+    setActiveTopic(topic);
+    setQuizSession({
+      topicId: topic.id,
+      startTs: Date.now(),
+      qStartTs: Date.now(),
+      curIdx: 0,
+      answers: new Array(topic.questions.length).fill(null),
+    });
+    setView("quiz");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function recordAnswer(idx, chosen, timeSec) {
+    const topic = activeTopic;
+    const q = topic.questions[idx];
+    const correctIdx = _d(q.ans);
+    const correct = chosen === correctIdx;
+    const key = `${topic.id}:${idx}`;
+    setState(s => {
+      const arr = s.attempts[key] ? [...s.attempts[key]] : [];
+      arr.push({ correct, timeSec, ts: Date.now(), chosen });
+      return { ...s, attempts: { ...s.attempts, [key]: arr } };
+    });
+  }
+
+  function submitQuiz() {
+    const topic = activeTopic;
+    const answers = quizSession.answers;
+    let correctCount = 0;
+    answers.forEach((a, i) => {
+      if (a && a.chosen === _d(topic.questions[i].ans)) correctCount++;
+    });
+    const totalTime = Math.round((Date.now() - quizSession.startTs) / 1000);
+    const summary = {
+      topicId: topic.id,
+      ts: Date.now(),
+      correctCount,
+      total: topic.questions.length,
+      totalTimeSec: totalTime,
+      answersSnap: answers,
+    };
+    setState(s => ({ ...s, sessions: [...s.sessions, summary] }));
+    setQuizSession({ ...quizSession, finished: true, summary });
+    setView("result");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function retryQuiz() { startQuiz(activeTopic); }
+
+  function nextTopic() {
+    const idx = TOPICS.findIndex(t => t.id === activeTopic.id);
+    if (idx < TOPICS.length - 1) startQuiz(TOPICS[idx + 1]);
+    else { setView("dashboard"); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header state={state} setState={setState} setView={setView} />
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pb-12 pt-6 animate-fade-in" key={view}>
+        {view === "home" && <Home state={state} onStart={startQuiz} setView={setView} />}
+        {view === "profile" && <Profile state={state} setState={setState} setView={setView} />}
+        {view === "quiz" && quizSession && activeTopic && (
+          <Quiz topic={activeTopic} session={quizSession} setSession={setQuizSession}
+            recordAnswer={recordAnswer} submitQuiz={submitQuiz}
+            cancel={() => { setView("home"); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+        )}
+        {view === "result" && quizSession?.finished && activeTopic && (
+          <Result topic={activeTopic} summary={quizSession.summary}
+            onRetry={retryQuiz} onNext={nextTopic}
+            onHome={() => { setView("home"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onDashboard={() => { setView("dashboard"); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+        )}
+        {view === "dashboard" && <Dashboard state={state} setState={setState} setView={setView} />}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ============================================================
+// Header
+// ============================================================
+function Header({ state, setState, setView }) {
+  return (
+    <header className="sticky top-0 z-50 bg-[#004030] text-white border-b border-[#D8C3A5]/30">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#D8C3A5] text-[#004030] serif font-black text-xl">Q</div>
+          <div>
+            <div className="brand-mark text-sm sm:text-base">CAIW QUIZ</div>
+            <div className="text-[10.5px] text-[#D8C3A5]/80 hidden sm:block">AI Containerization & Agent Workflow · {TOTAL_Q} Q</div>
+          </div>
+        </div>
+        <nav className="flex items-center gap-1">
+          <NavBtn onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.Home />}>
+            <span className="hidden sm:inline">首頁</span>
+          </NavBtn>
+          <NavBtn onClick={() => { setView("dashboard"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.Dashboard />}>
+            <span className="hidden sm:inline">儀表板</span>
+          </NavBtn>
+          <NavBtn onClick={() => { setView("profile"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.User />}>
+            <span className="hidden sm:inline">個資</span>
+          </NavBtn>
+          <button
+            className="ml-2 p-2 hover:bg-white/10 rounded-lg transition-colors"
+            onClick={() => setState(s => ({ ...s, theme: s.theme === "dark" ? "light" : "dark" }))}
+            title={state.theme === "dark" ? "Switch to light" : "Switch to dark"}
+          >{state.theme === "dark" ? <Icon.Sun /> : <Icon.Moon />}</button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+function NavBtn({ children, icon, onClick }) {
+  return (
+    <button onClick={onClick} className="px-3 py-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-sm">
+      {icon}{children}
+    </button>
+  );
+}
+
+// ============================================================
+// Home
+// ============================================================
+function Home({ state, onStart, setView }) {
+  const stats = useMemo(() => computeTopicStats(state, TOPICS), [state]);
+  return (
+    <div>
+      <section className="mb-8">
+        <div className="badge badge-gold mb-3">CAIW · TOPIC QUIZ</div>
+        <h1 className="h-display text-3xl sm:text-4xl mb-2 leading-tight">
+          AI 容器化與高階 Agent 工作流 主題測驗
+        </h1>
+        <div className="serif text-lg sm:text-xl italic opacity-70 mb-4" style={{color:'var(--mute)'}}>
+          AI Containerization & Advanced Agent Workflow · Topic Quiz
+        </div>
+        <Bi
+          zh="共 7 個主題、40 道題目，對應知識庫 M1–M7。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="7 topics · 40 questions, mapped to KB modules M1–M7. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          sizeZh="text-base" sizeEn="text-sm"
+        />
+      </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {TOPICS.map((tp, i) => {
+          const s = stats[tp.id];
+          return (
+            <div key={tp.id} className="topic-tile" onClick={() => onStart(tp)}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="badge badge-green">TOPIC {String(i + 1).padStart(2, '0')}</div>
+                <div className="text-xs opacity-60">{tp.questions.length} Q</div>
+              </div>
+              <div className="serif font-bold text-lg leading-snug mb-1">{tp.titleZh}</div>
+              <div className="serif italic text-sm opacity-70 mb-3">{tp.titleEn}</div>
+              <Bi zh={tp.descZh} en={tp.descEn} sizeZh="text-xs" sizeEn="text-xs" className="mb-4 opacity-80" />
+              <div className="flex items-center justify-between text-[11px] mb-2" style={{color:'var(--mute)'}}>
+                <span>已作答 / Attempted: <span className="font-semibold" style={{color:'var(--ink)'}}>{s.attempted}/{tp.questions.length}</span></span>
+                <span>正確率 / Acc: <span className="font-semibold" style={{color:'var(--ink)'}}>{s.attempted > 0 ? Math.round(s.lastAccuracy * 100) : "—"}%</span></span>
+              </div>
+              <div className="progress-bar mb-3"><div className="progress-fill" style={{ width: `${s.attempted / tp.questions.length * 100}%` }}></div></div>
+              <div className="flex justify-end">
+                <span className="text-sm font-medium" style={{color:'var(--bcg-green)'}}>
+                  {s.attempted > 0 ? '重新測驗 / Retake' : '開始作答 / Start'} →
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="bcg-card-cream p-5">
+        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
+          總覽 · Overview
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Stat num={TOTAL_Q} labelZh="總題數" labelEn="Total Questions" />
+          <Stat num={TOPICS.length} labelZh="主題數" labelEn="Topics" />
+          <Stat num={state.sessions.length} labelZh="測驗次數" labelEn="Sessions" />
+          <Stat num={Object.keys(state.attempts).length} labelZh="已作答題目" labelEn="Distinct Qs" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ num, labelZh, labelEn }) {
+  return (
+    <div>
+      <div className="stat-num">{num}</div>
+      <div className="text-[11px] mt-1 leading-tight" style={{color:'var(--mute)'}}>
+        <div>{labelZh}</div>
+        <div className="italic opacity-80">{labelEn}</div>
+      </div>
+    </div>
+  );
+}
+
+function computeTopicStats(state, topics) {
+  const r = {};
+  topics.forEach(tp => {
+    let attempted = 0, lastCorrect = 0;
+    tp.questions.forEach((_, qi) => {
+      const arr = state.attempts[`${tp.id}:${qi}`];
+      if (arr && arr.length > 0) {
+        attempted++;
+        if (arr[arr.length - 1].correct) lastCorrect++;
+      }
+    });
+    r[tp.id] = { attempted, lastAccuracy: attempted > 0 ? lastCorrect / attempted : 0 };
+  });
+  return r;
+}
+
+// ============================================================
+// Profile
+// ============================================================
+function Profile({ state, setState, setView }) {
+  const [p, setP] = useState(state.profile);
+  return (
+    <div className="max-w-xl">
+      <h2 className="h-display text-2xl mb-1">個人資料</h2>
+      <div className="serif italic opacity-70 mb-1" style={{color:'var(--mute)'}}>Profile</div>
+      <Bi
+        zh="資料只儲存在本機瀏覽器，不會上傳。"
+        en="Data is stored locally in your browser only."
+        sizeZh="text-sm" sizeEn="text-xs"
+        className="mb-5"
+      />
+      <div className="bcg-card p-6 space-y-4">
+        <Field labelZh="姓名" labelEn="Name (English / 中文)"
+          value={p.name} onChange={v => setP({ ...p, name: sanitizeName(v) })} />
+        <Field labelZh="學號" labelEn="Student ID"
+          value={p.studentId} onChange={v => setP({ ...p, studentId: sanitizeStudentId(v) })} />
+        <Field labelZh="Email" labelEn="Email" type="email"
+          value={p.email} onChange={v => setP({ ...p, email: sanitizeName(v) })} />
+        <div>
+          <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
+            <span>組別</span>
+            <span className="italic ml-1 opacity-80">· Group</span>
+          </label>
+          <select value={p.group} onChange={e => setP({ ...p, group: e.target.value })}>
+            <option value="">— Select —</option>
+            {['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10','G11','G12','Others'].map(g=> <option key={g} value={g}>{g}</option>)}
+          </select>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button className="bcg-btn" onClick={() => { setState(s => ({ ...s, profile: p })); setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>
+            儲存 / Save
+          </button>
+          <button className="bcg-btn-ghost" onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>取消 / Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function Field({ labelZh, labelEn, value, onChange, type='text' }) {
+  return (
+    <div>
+      <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
+        <span>{labelZh}</span>
+        <span className="italic ml-1 opacity-80">· {labelEn}</span>
+      </label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+// ============================================================
+// Quiz
+// ============================================================
+function Quiz({ topic, session, setSession, recordAnswer, submitQuiz, cancel }) {
+  const q = topic.questions[session.curIdx];
+  const cur = session.answers[session.curIdx];
+  const correctIdx = _d(q.ans);
+  // reveal 由「該題是否已作答」直接推導，不用 useState（避免 race condition）
+  const reveal = cur != null;
+
+  useEffect(() => {
+    if (session.answers[session.curIdx] == null) {
+      setSession(s => ({ ...s, qStartTs: Date.now() }));
+    }
+  }, [session.curIdx]);
+
+  function choose(i) {
+    if (reveal) return;
+    const timeSec = Math.round((Date.now() - session.qStartTs) / 1000);
+    const newAnswers = [...session.answers];
+    newAnswers[session.curIdx] = { chosen: i, timeSec };
+    setSession(s => ({ ...s, answers: newAnswers }));
+    recordAnswer(session.curIdx, i, timeSec);
+  }
+
+  function go(delta) {
+    const newIdx = session.curIdx + delta;
+    if (newIdx < 0 || newIdx >= topic.questions.length) return;
+    setSession(s => ({ ...s, curIdx: newIdx }));
+  }
+
+  const allAnswered = session.answers.every(a => a !== null);
+  const progress = (session.curIdx + 1) / topic.questions.length;
+  const isCorrect = cur && cur.chosen === correctIdx;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <div className="badge badge-gold mb-1">TOPIC · {topic.titleEn}</div>
+          <h2 className="serif font-bold text-xl">
+            <span>{topic.titleZh}</span>
+            <span className="italic font-normal text-sm opacity-70 ml-2">· {topic.titleEn}</span>
+          </h2>
+        </div>
+        <button className="text-xs underline opacity-70 hover:opacity-100" onClick={cancel}>
+          退出 / Exit
+        </button>
+      </div>
+      <div className="text-xs mb-2 opacity-70">
+        第 {session.curIdx + 1} 題 / Question {session.curIdx + 1} of {topic.questions.length}
+      </div>
+      <div className="progress-bar mb-6"><div className="progress-fill" style={{ width: `${progress * 100}%` }}></div></div>
+
+      <div className="bcg-card p-6 mb-4">
+        <div className="serif font-bold text-base sm:text-lg leading-relaxed">{q.qZh}</div>
+        <div className="serif italic text-sm mt-1.5 opacity-75">{q.qEn}</div>
+
+        <div className="space-y-2.5 mt-6">
+          {q.optsZh.map((optZh, i) => {
+            const optEn = q.optsEn[i];
+            const isChosen = cur && cur.chosen === i;
+            let cls = "opt";
+            if (reveal) {
+              if (i === correctIdx) cls += " correct";
+              else if (isChosen) cls += " wrong";
+            } else if (isChosen) cls += " selected";
+            return (
+              <div key={i} className={cls} onClick={() => choose(i)}>
+                <div className="flex items-start gap-3">
+                  <div className="serif font-bold text-base shrink-0" style={{minWidth:'22px',color:'var(--bcg-green)'}}>{String.fromCharCode(65 + i)}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{optZh}</div>
+                    <div className="text-xs italic opacity-70 mt-0.5">{optEn}</div>
+                  </div>
+                  {reveal && i === correctIdx && <span className="serif font-bold" style={{color:'var(--ok)'}}>✓</span>}
+                  {reveal && isChosen && i !== correctIdx && <span className="serif font-bold" style={{color:'var(--bad)'}}>✗</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {reveal && (
+          <div className="mt-6 p-4 rounded-lg animate-fade-in" style={{
+            background: isCorrect ? 'rgba(47,125,79,.08)' : 'rgba(179,38,30,.06)',
+            border: `1px solid ${isCorrect ? 'var(--ok)' : 'var(--bad)'}`,
+          }}>
+            <div className="serif font-bold text-sm mb-2" style={{color: isCorrect ? 'var(--ok)' : 'var(--bad)'}}>
+              {isCorrect ? '✓ 答對了！ Correct!' : '✗ 答錯了 Incorrect'}
+            </div>
+            <div className="text-sm leading-relaxed">{q.expZh}</div>
+            <div className="text-xs italic opacity-75 mt-1">{q.expEn}</div>
+            <div className="text-[11px] mt-3 opacity-60">⏱ {cur.timeSec}s</div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center">
+        <button className="bcg-btn-ghost" onClick={() => go(-1)} disabled={session.curIdx === 0}>← 上一題 / Prev</button>
+        <div className="text-xs opacity-70">
+          已作答 / Answered: <span className="font-semibold">{session.answers.filter(a => a !== null).length}</span> / {topic.questions.length}
+        </div>
+        {session.curIdx < topic.questions.length - 1 ? (
+          <button className="bcg-btn" onClick={() => go(1)}>下一題 / Next →</button>
+        ) : (
+          <button className="bcg-btn" onClick={submitQuiz} disabled={!allAnswered}>送出 / Submit ✓</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Result
+// ============================================================
+function Result({ topic, summary, onRetry, onNext, onHome, onDashboard }) {
+  const pct = Math.round(summary.correctCount / summary.total * 100);
+  const grade = pct >= 90 ? "Excellent / 優異" : pct >= 75 ? "Good / 良好" : pct >= 60 ? "Pass / 及格" : "Keep practicing / 再加油";
+  return (
+    <div>
+      <div className="bcg-card p-8 mb-5 text-center">
+        <div className="badge badge-gold mb-3">{topic.titleEn.toUpperCase()}</div>
+        <div className="serif font-bold text-lg mb-1">{topic.titleZh}</div>
+        <div className="serif italic text-sm opacity-70 mb-6">Your Score · 本次成績</div>
+        <div className="serif font-black" style={{fontSize:'56px',color:'var(--bcg-green)',lineHeight:1}}>
+          {summary.correctCount}<span className="opacity-50" style={{fontSize:'28px'}}>/{summary.total}</span>
+        </div>
+        <div className="serif text-2xl mt-2" style={{color:'var(--bcg-green)'}}>{pct}%</div>
+        <div className="text-xs mt-2 opacity-70">{grade}</div>
+        <div className="text-xs mt-4 opacity-60">
+          ⏱ {summary.totalTimeSec}s · 平均每題 / Avg per Q: {Math.round(summary.totalTimeSec / summary.total)}s
+        </div>
+      </div>
+
+      <div className="bcg-card p-5 mb-5">
+        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>逐題回顧 · Per-Question Review</div>
+        <div className="space-y-2">
+          {topic.questions.map((q, i) => {
+            const a = summary.answersSnap[i];
+            const correctIdx = _d(q.ans);
+            const isCorrect = a && a.chosen === correctIdx;
+            return (
+              <div key={i} className="flex items-start gap-3 py-2 border-b last:border-b-0" style={{borderColor:'var(--line)'}}>
+                <div className="serif font-bold shrink-0" style={{color: isCorrect ? 'var(--ok)' : 'var(--bad)', minWidth:'28px'}}>
+                  {isCorrect ? '✓' : '✗'} {i + 1}
+                </div>
+                <div className="flex-1 text-sm">
+                  <div>{q.qZh}</div>
+                  <div className="italic text-xs opacity-70 mt-0.5">{q.qEn}</div>
+                  {!isCorrect && (
+                    <div className="text-xs mt-1.5 p-2 rounded" style={{background:'rgba(216,195,165,.12)'}}>
+                      <span className="font-semibold">正解 / Answer:</span> {String.fromCharCode(65 + correctIdx)}. {q.optsZh[correctIdx]}
+                      <div className="italic opacity-70">{q.optsEn[correctIdx]}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="text-[11px] opacity-60 shrink-0">⏱ {a?.timeSec ?? 0}s</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 justify-center">
+        <button className="bcg-btn-ghost" onClick={onRetry}>↻ 重作 / Retry</button>
+        <button className="bcg-btn" onClick={onNext}>下一主題 / Next Topic →</button>
+        <button className="bcg-btn-ghost" onClick={onDashboard}>📊 儀表板 / Dashboard</button>
+        <button className="bcg-btn-ghost" onClick={onHome}>⌂ 首頁 / Home</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Dashboard
+// ============================================================
+function Dashboard({ state, setState, setView }) {
+  const overall = useMemo(() => {
+    let totalAttempts = 0, totalCorrect = 0, totalTime = 0;
+    Object.values(state.attempts).forEach(arr => {
+      arr.forEach(a => {
+        totalAttempts++;
+        if (a.correct) totalCorrect++;
+        totalTime += a.timeSec || 0;
+      });
+    });
+    return {
+      totalAttempts, totalCorrect, totalTime,
+      accuracy: totalAttempts ? totalCorrect / totalAttempts : 0,
+      avgTime: totalAttempts ? totalTime / totalAttempts : 0,
+    };
+  }, [state.attempts]);
+
+  const perQuestion = useMemo(() => {
+    const rows = [];
+    TOPICS.forEach(topic => {
+      topic.questions.forEach((q, qi) => {
+        const arr = state.attempts[`${topic.id}:${qi}`] || [];
+        const correct = arr.filter(a => a.correct).length;
+        const avgT = arr.length ? arr.reduce((s, a) => s + a.timeSec, 0) / arr.length : 0;
+        rows.push({
+          topicId: topic.id,
+          topicLabelZh: topic.titleZh,
+          topicLabelEn: topic.titleEn,
+          qIdx: qi,
+          qLabelZh: q.qZh.slice(0, 36) + (q.qZh.length > 36 ? "…" : ""),
+          attempts: arr.length,
+          accuracy: arr.length ? correct / arr.length : 0,
+          avgTime: avgT,
+          lastCorrect: arr.length ? arr[arr.length - 1].correct : null,
+        });
+      });
+    });
+    return rows;
+  }, [state.attempts]);
+
+  const topicEvolution = useMemo(() => {
+    const map = {};
+    TOPICS.forEach(t => { map[t.id] = []; });
+    state.sessions.forEach(s => {
+      if (map[s.topicId]) {
+        map[s.topicId].push({ ts: s.ts, accuracy: s.correctCount / s.total, time: s.totalTimeSec });
+      }
+    });
+    return map;
+  }, [state.sessions]);
+
+  function exportCSV() {
+    const rows = [];
+    rows.push(["section", "field1", "field2", "field3", "field4", "field5", "field6", "field7"]);
+    rows.push(["profile", "name", state.profile.name || "", "studentId", state.profile.studentId || "", "group", state.profile.group || "", state.profile.email || ""]);
+    rows.push([]);
+    rows.push(["per_question", "topicZh", "topicEn", "qIdx", "attempts", "accuracy", "avgTimeSec", "lastCorrect"]);
+    perQuestion.forEach(r => {
+      rows.push(["per_question", r.topicLabelZh, r.topicLabelEn, r.qIdx + 1, r.attempts, r.accuracy.toFixed(3), r.avgTime.toFixed(1), r.lastCorrect === null ? "" : r.lastCorrect]);
+    });
+    rows.push([]);
+    rows.push(["session", "topicZh", "ts", "correctCount", "total", "accuracy", "totalTimeSec", ""]);
+    state.sessions.forEach(s => {
+      const tp = TOPICS.find(t => t.id === s.topicId);
+      rows.push(["session", tp?.titleZh || s.topicId, new Date(s.ts).toISOString(), s.correctCount, s.total, (s.correctCount / s.total).toFixed(3), s.totalTimeSec, ""]);
+    });
+    rows.push([]);
+    rows.push(["raw_attempt", "topicZh", "qIdx", "correct", "timeSec", "ts", "chosen", ""]);
+    Object.entries(state.attempts).forEach(([k, arr]) => {
+      const [tid, qi] = k.split(":");
+      const tp = TOPICS.find(t => t.id === tid);
+      arr.forEach(a => {
+        rows.push(["raw_attempt", tp?.titleZh || tid, Number(qi) + 1, a.correct, a.timeSec, new Date(a.ts).toISOString(), a.chosen, ""]);
+      });
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    const safeName = sanitizeName(state.profile.name).replace(/\s+/g, '_') || "anon";
+    const safeId = sanitizeStudentId(state.profile.studentId) || "noid";
+    a.href = url;
+    a.download = `CAIW主題測驗_${safeName}_${safeId}_${stamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function resetAll() {
+    if (confirm("確定要清除所有作答紀錄？此動作無法復原。\nClear all attempt records? This cannot be undone.")) {
+      setState(s => ({ ...s, attempts: {}, sessions: [] }));
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <div className="flex-1">
+          <h2 className="h-display text-2xl">學習儀表板</h2>
+          <div className="serif italic text-sm opacity-70" style={{color:'var(--mute)'}}>Learning Dashboard</div>
+        </div>
+        <button className="bcg-btn flex items-center gap-2" onClick={exportCSV}>
+          <Icon.Download size={16} /> 匯出 CSV / Export
+        </button>
+        <button className="bcg-btn-ghost" onClick={resetAll}>清除 / Reset</button>
+      </div>
+
+      {state.profile.name && (
+        <div className="bcg-card-cream p-4 mb-5 text-sm">
+          <span className="opacity-70">作答者 / Learner：</span>
+          <span className="font-semibold">{state.profile.name}</span>
+          {state.profile.studentId && <span className="ml-3 opacity-70">ID: {state.profile.studentId}</span>}
+          {state.profile.group && <span className="ml-3 opacity-70">組別 / Group: {state.profile.group}</span>}
+          {state.profile.email && <span className="ml-3 opacity-70">{state.profile.email}</span>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatBox value={overall.totalAttempts} labelZh="總作答次數" labelEn="Total Attempts" />
+        <StatBox value={`${Math.round(overall.accuracy * 100)}%`} labelZh="整體正確率" labelEn="Overall Accuracy" />
+        <StatBox value={fmtTime(overall.totalTime)} labelZh="總花費時間" labelEn="Total Time" />
+        <StatBox value={`${overall.avgTime.toFixed(1)}s`} labelZh="平均每題時間" labelEn="Avg Time / Q" />
+      </div>
+
+      <div className="bcg-card p-5 mb-6">
+        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
+          各主題正確率演進
+          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Accuracy Evolution per Topic</span>
+        </div>
+        <div className="space-y-3">
+          {TOPICS.map(tp => {
+            const ev = topicEvolution[tp.id];
+            if (ev.length === 0) {
+              return (
+                <div key={tp.id} className="text-xs flex items-center gap-3 py-1">
+                  <div className="font-medium" style={{ minWidth: 160 }}>{tp.titleZh}</div>
+                  <div className="italic opacity-60">尚未測驗 / Not yet attempted</div>
+                </div>
+              );
+            }
+            return <SparkRow key={tp.id} labelZh={tp.titleZh} labelEn={tp.titleEn} points={ev} />;
+          })}
+        </div>
+      </div>
+
+      <div className="bcg-card p-5 mb-6">
+        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
+          各題練習紀錄
+          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Per-Question Practice Record</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="kb">
+            <thead>
+              <tr>
+                <th>主題 · Topic</th>
+                <th>#</th>
+                <th>題目 · Question</th>
+                <th>次數 · Atts</th>
+                <th>正確率 · Acc</th>
+                <th>均時 · AvgT</th>
+                <th>上次 · Last</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perQuestion.map((r, i) => (
+                <tr key={i}>
+                  <td className="text-xs">{r.topicLabelZh}</td>
+                  <td>{r.qIdx + 1}</td>
+                  <td className="text-xs">{r.qLabelZh}</td>
+                  <td>{r.attempts}</td>
+                  <td>{r.attempts > 0 ? `${Math.round(r.accuracy * 100)}%` : "—"}</td>
+                  <td>{r.attempts > 0 ? `${r.avgTime.toFixed(1)}s` : "—"}</td>
+                  <td>{r.lastCorrect === null ? "—" : r.lastCorrect ? <span style={{ color: "var(--ok)" }}>✓</span> : <span style={{ color: "var(--bad)" }}>✗</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bcg-card p-5">
+        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
+          測驗會話紀錄
+          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Session History</span>
+        </div>
+        {state.sessions.length === 0 ? (
+          <div className="text-sm italic opacity-60">尚無測驗紀錄 / No sessions yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="kb">
+              <thead>
+                <tr>
+                  <th>時間 · Time</th>
+                  <th>主題 · Topic</th>
+                  <th>成績 · Score</th>
+                  <th>正確率 · Acc</th>
+                  <th>耗時 · Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...state.sessions].reverse().map((s, i) => {
+                  const tp = TOPICS.find(t => t.id === s.topicId);
+                  return (
+                    <tr key={i}>
+                      <td className="text-xs">{new Date(s.ts).toLocaleString()}</td>
+                      <td className="text-xs">{tp?.titleZh}</td>
+                      <td>{s.correctCount}/{s.total}</td>
+                      <td>{Math.round(s.correctCount / s.total * 100)}%</td>
+                      <td>{fmtTime(s.totalTimeSec)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ value, labelZh, labelEn }) {
+  return (
+    <div className="bcg-card p-4 text-center">
+      <div className="stat-num">{value}</div>
+      <div className="text-[11px] mt-1.5 leading-tight" style={{color:'var(--mute)'}}>
+        <div>{labelZh}</div>
+        <div className="italic opacity-80">{labelEn}</div>
+      </div>
+    </div>
+  );
+}
+
+function SparkRow({ labelZh, labelEn, points }) {
+  const W = 240, H = 36, PAD = 4;
+  const xs = points.map((_, i) => PAD + i * ((W - 2 * PAD) / Math.max(points.length - 1, 1)));
+  const ys = points.map(p => PAD + (1 - p.accuracy) * (H - 2 * PAD));
+  const path = points.map((_, i) => `${i === 0 ? "M" : "L"} ${xs[i].toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
+  const last = points[points.length - 1];
+  return (
+    <div className="flex items-center gap-3 text-xs flex-wrap">
+      <div style={{ minWidth: 160 }}>
+        <div className="font-medium">{labelZh}</div>
+        <div className="italic opacity-70 text-[10.5px]">{labelEn}</div>
+      </div>
+      <svg width={W} height={H} className="shrink-0">
+        <line x1={PAD} y1={H / 2} x2={W - PAD} y2={H / 2} stroke="var(--line)" strokeWidth="0.5" strokeDasharray="2 2" />
+        <path d={path} fill="none" stroke="var(--bcg-green)" strokeWidth="1.5"/>
+        {points.map((p, i) => (
+          <circle key={i} cx={xs[i]} cy={ys[i]} r="3.5" fill={p.accuracy >= 0.75 ? "var(--ok)" : p.accuracy >= 0.5 ? "var(--bcg-green)" : "var(--bad)"} />
+        ))}
+      </svg>
+      <div className="opacity-70">
+        n={points.length} · latest <span className="font-semibold">{Math.round(last.accuracy * 100)}%</span>
+      </div>
+    </div>
+  );
+}
+
+function fmtTime(s) {
+  if (s < 60) return `${Math.round(s)}s`;
+  const m = Math.floor(s / 60), ss = Math.round(s % 60);
+  return `${m}m ${ss}s`;
+}
+
+// ============================================================
+// Footer
+// ============================================================
+function Footer() {
+  return (
+    <footer className="bg-[#004030] text-[#D8C3A5] mt-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="opacity-70">Version 2026.07.28 · For Educational Use Only</div>
+        <div className="flex items-center gap-4">
+          <span>Architect: <a href="https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo" target="_blank" rel="noopener" className="underline hover:text-white">Prof. Shihmin Lo</a></span>
+          <button onClick={() => window.scrollTo({top:0,behavior:'smooth'})} className="font-bold hover:text-white">Top ↑</button>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ErrorBoundary><App /></ErrorBoundary>
+);
+</script>
+</body>
+</html>

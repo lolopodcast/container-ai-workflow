@@ -426,7 +426,7 @@ const dict = {
 
     mres_nav: "9. 外部學習資源", mres_title: "外部學習資源",
     mres_desc: "以下資源可以幫助你把本知識庫的概念，對應到實際的技術文件與工具生態。",
-    mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作",
+    mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作", mres_group3: "配套自我測驗",
 
     date: "Version 2026.07.20",
     copyright: "For Educational Use Only",
@@ -709,7 +709,7 @@ const dict = {
 
     mres_nav: "9. Learning Resources", mres_title: "External Learning Resources",
     mres_desc: "The resources below connect this knowledge base's concepts to real technical documentation and tooling ecosystems.",
-    mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration",
+    mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration", mres_group3: "Companion Self-Quiz",
 
     date: "Version 2026.07.20",
     copyright: "For Educational Use Only",
@@ -743,6 +743,9 @@ const RESOURCES = [
   { group:'mres_group2', items: [
     { label:'Claude Code — Overview', url:'https://docs.claude.com/en/docs/claude-code/overview', desc:{ zh:'Claude Code 官方文件，了解高階 Agent 如何協作完成任務。', en:'Official Claude Code docs on how high-level agents collaborate on tasks.' } },
     { label:'Claude Code — Product Page', url:'https://claude.com/claude-code', desc:{ zh:'Claude Code 產品介紹頁面。', en:'Claude Code product overview page.' } }
+  ]},
+  { group:'mres_group3', items: [
+    { label:'CAIW Topic Quiz 主題測驗（7 主題 × 40 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M7 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M7: per-question explanations, dashboard with accuracy evolution, CSV export.' } }
   ]}
 ];
 
