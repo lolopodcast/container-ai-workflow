@@ -617,6 +617,60 @@ const TOPICS = [
         expEn: "Archiving happens before review, done by deterministic scheduler code — whatever later happens to the source, the archived copy remains (KB Part 7)."
       }
     ]
+  },
+  {
+    id: "ops_governance",
+    titleZh: "維運與治理",
+    titleEn: "Operations & Governance",
+    descZh: "同步義務、備份與可見性、設定先驗證、擴充後回歸測試。",
+    descEn: "Sync obligation, backup & visibility, verify-before-configure, regression testing.",
+    questions: [
+      {
+        qZh: "「唯一事實來源」為什麼需要「同步義務」配套？",
+        qEn: "Why does a 'single source of truth' need a 'sync obligation' to go with it?",
+        optsZh: ["因為 core 檔案會自動同步到所有地方","因為 core 改變後若衍生品不跟上，知識就地分裂，「唯一」名存實亡","因為同步可以節省儲存空間","因為平台規定必須同步"],
+        optsEn: ["Because core files sync everywhere automatically","Because if derivatives don't follow when core changes, knowledge splinters and 'single' becomes a name only","Because syncing saves storage space","Because the platform requires syncing"],
+        ans: A[1],
+        expZh: "單一事實來源靠紀律維持：每次 core 改變，接頭與濃縮版都要立即更新，否則各處版本分歧，宣告就失效了（KB 第八部分第一律）。",
+        expEn: "A single source of truth is maintained by discipline: every core change must propagate to adapters immediately, or versions diverge (KB Part 8, Discipline 1)."
+      },
+      {
+        qZh: "備份決策包含哪兩個獨立的問題？",
+        qEn: "Which two independent questions make up the backup decision?",
+        optsZh: ["備份速度與備份大小","它有備份嗎？備份該給誰看見（可見性）？","備份格式與備份頻率","本機備份與雲端備份的選擇"],
+        optsEn: ["Backup speed and backup size","Is it backed up? Who should the backup be visible to?","Backup format and backup frequency","Choosing between local and cloud backup"],
+        ans: A[1],
+        expZh: "「要不要備份」與「能不能公開」是獨立決策：含課程評分等敏感資料的知識庫必須推送 private 儲存庫，且完成後回頭驗證設定生效（KB 第八部分第二律）。",
+        expEn: "'Whether to back up' and 'whether it can be public' are independent: sensitive knowledge bases go to private repos, verified afterwards (KB Part 8, Discipline 2)."
+      },
+      {
+        qZh: "「設定先驗證」在晨報巡檢清單的實踐是？",
+        qEn: "How was 'verify-before-configure' practised for the morning-brief patrol list?",
+        optsZh: ["把所有想到的網址都直接寫入","九個候選網址逐一實測可達性，剔除兩個擋爬蟲的大站後才寫入","只寫入知名大站的網址","請學生幫忙測試網址"],
+        optsEn: ["Writing in every URL that came to mind","Testing all nine candidate URLs for reachability and dropping the two that block crawlers before writing them in","Only writing in well-known big sites","Asking students to test the URLs"],
+        ans: A[1],
+        expZh: "憑印象寫入的網址若實際不可達（如回 403），系統會每天白白失敗且無人察覺；先驗證再寫入是把設定當程式碼對待（KB 第八部分第三律）。",
+        expEn: "URLs written from impression that are unreachable (e.g. 403) fail silently every day; verifying first treats configuration as code (KB Part 8, Discipline 3)."
+      },
+      {
+        qZh: "擴充後回歸測試要驗證的兩件事是？",
+        qEn: "What two things must a post-extension regression test verify?",
+        optsZh: ["新功能會動＋執行速度變快","新功能會動＋舊防線（如注入防禦）仍然有效","程式碼行數＋檔案大小","介面美觀＋使用者滿意度"],
+        optsEn: ["The new feature works + execution got faster","The new feature works + the old defenses (e.g. injection defense) still hold","Lines of code + file size","UI beauty + user satisfaction"],
+        ans: A[1],
+        expZh: "擴充可能不經意削弱既有防線；埋錯樣本的回歸測試同時驗證新領域包正確運作與安全機制完好（KB 第八部分第四律）。",
+        expEn: "An extension can quietly weaken defenses; the planted-flaw test verifies both the new pack and intact security (KB Part 8, Discipline 4)."
+      },
+      {
+        qZh: "測試檔標題寫「可刪除」但系統只記錄未刪除——這展現了什麼？",
+        qEn: "The test file's title said 'deletable', yet the system only logged it without deleting — what does this demonstrate?",
+        optsZh: ["系統故障，應該要刪除","精確防禦：分得清描述性註記與真指令，不遵從也不過度反應","系統沒有刪除檔案的權限","系統沒讀到標題"],
+        optsEn: ["A system fault; it should have deleted","Precise defense: telling descriptive annotations from real instructions, neither obeying nor over-reacting","The system lacked permission to delete files","The system failed to read the title"],
+        ans: A[1],
+        expZh: "成熟防禦不在「擋掉多少」而在判斷精度：把「像指令的資料」記錄下來但不執行，既不被操縱也不過度防禦（KB 第八部分）。",
+        expEn: "Mature defense is judgment precision: recording instruction-like data without executing it — neither manipulated nor over-defensive (KB Part 8)."
+      }
+    ]
   }
 ];
 const TOTAL_Q = TOPICS.reduce((s, t) => s + t.questions.length, 0);
@@ -860,8 +914,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 7 個主題、40 道題目，對應知識庫 M1–M7。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="7 topics · 40 questions, mapped to KB modules M1–M7. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 8 個主題、45 道題目，對應知識庫 M1–M8。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="8 topics · 45 questions, mapped to KB modules M1–M8. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
