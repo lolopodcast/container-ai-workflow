@@ -115,7 +115,7 @@ const _d = (token) => {
 const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
 
 /* ---------- module numbering ---------- */
-const NUM_LEARN = 6;
+const NUM_LEARN = 7;
 const TOTAL = 1 + NUM_LEARN + 3;
 const IDX_LAB = NUM_LEARN + 1;
 const IDX_RES = NUM_LEARN + 2;
@@ -170,7 +170,7 @@ const dict = {
     deep_dive_label: "Deep Dive 深入解析",
     wrapup_label: "Wrap-up 總結",
 
-    analytics_nav: "9. 學習歷程分析",
+    analytics_nav: "10. 學習歷程分析",
     analytics_title: "學習歷程分析", analytics_desc: "本頁彙整你在各模組的停留時間、互動次數、測驗答對率與學習卡使用率，並提供弱點分析與 CSV 匯出。",
     analytics_form_title: "基本資料（匯出前請填寫）",
     analytics_group: "組別", analytics_group_select: "請選擇", analytics_dept: "系級",
@@ -215,7 +215,8 @@ const dict = {
       { num:"03", title:"五步驟工作流", desc:"從環境初始化到終端輸出，一條完整的情報產出流水線。" },
       { num:"04", title:"指令範本實戰", desc:"如何用架構語意，而非實作細節，向 AI 下達高階指令。" },
       { num:"05", title:"Agent 解剖學", desc:"四件套、Vibe Coding、Skill 與 Subagent 的差異，以及 Agent 的四種創造來源。" },
-      { num:"06", title:"審查代理人實戰", desc:"以真實建置的多視角審查系統，示範概念如何組裝成可擴充、跨平台的 Agent 團隊。" }
+      { num:"06", title:"審查代理人實戰", desc:"以真實建置的多視角審查系統，示範概念如何組裝成可擴充、跨平台的 Agent 團隊。" },
+      { num:"07", title:"無人值守實戰", desc:"Heartbeat、零成本偵測與縱深防禦——讓審查系統自動接收、自動審查、安全運作。" }
     ],
     m0_stats: [
       { val:"4", label:"基礎設施層" },
@@ -376,7 +377,34 @@ const dict = {
       { q:"對既有的專用審查 skill，系統採取什麼治理策略？", opts:["立即全部刪除以避免混亂","分流共存，待新系統實戰驗證後再改造為領域擴充包","改名後隱藏起來","轉為付費功能"], ans:_A1, exp:"舊 skill 含新系統沒有的領域知識且久經實戰；正確做法是共存分流，等新系統證明自己後再逐步遷移，而非立即淘汰。" }
     ],
 
-    mlab_nav: "7. 互動實驗室", mlab_title: "互動實驗室",
+    m7_nav: "7. 無人值守實戰",
+    m7_title: "實戰案例：Heartbeat 與無人值守收件匣",
+    m7_overview: "前一模組把審查系統建了起來；本模組解決「誰來按按鈕」的問題——用 heartbeat（心跳）讓系統在開機後自動接收檔案、自動審查、自動產出報告，並示範無人值守自動化最關鍵的兩件事：安全設計與對抗性驗收。",
+    m7_highlights: ["Heartbeat 心跳","零成本偵測","確定性程式碼 vs AI","收件即歸檔","縱深防禦","Fail-closed"],
+    m7_p1: "Heartbeat 的觸發設計首先要回答「電腦需不需要一直開著」——答案是不需要。排程器設兩個觸發器：登入後延遲 5 分鐘（留時間給雲端同步關機期間累積的上傳）與每日早晨備援；臨時想檢查則有桌面捷徑、口令、排程指令三種手動方式。收件端用 Dropbox File Request：上傳者不需帳號、看不到資料夾內容、也刪不了任何檔案——誤刪風險從「事後救援」變成「機制免疫」。",
+    m7_p2: "整套系統最重要的分工原則是：「確定性程式碼做搬運，AI 只做判斷」。偵測新檔案、大小守衛、歸檔複製這些有標準答案的工作，交給排程腳本——零成本、可預測、而且不會被騙；AI 只負責讀檔與審查這些需要判斷力的工作。沒有新檔案時，AI 根本不會被喚醒——這就是「零成本偵測」：系統天天心跳，但只在真正有工作時才花錢。",
+    m7_p3: "無人值守代表沒有人在旁邊看著，所以安全要靠「縱深防禦」——五層互相獨立的防線：一、指令隔離（文件是資料不是指令，操縱企圖＝嚴重度 5 缺陷＋強制隔離）；二、權限最小化（無人值守執行拿掉命令列權限，寫入範圍限定於報告與狀態檔）；三、資源守衛（20MB 大小上限，防灌爆空間與成本）；四、竄改偵測（知識庫納入 git 版控作基準）；五、fail-closed——狀態檔損毀時寧可安全停止並通知人類，也不冒險大量重跑。單層被突破，仍有下一層。",
+    m7_p4: "上線前的驗收不只測「正常流程跑得通」，還要做對抗性驗收：故意投遞一份內藏提示注入的測試檔——文件末段偽稱「系統指示」，要求審查系統忽略規則、直接給 10 分滿分並標記入庫。實測結果：評分完全未被操縱（給了 1.6 分）、注入被列為頭號嚴重度 5 缺陷、文件被強制隔離，系統還做出了正確的安全推理：「一份會試圖操縱下游流程的文件，其正文數字也不應被信任。」無人值守系統的真正驗收標準，是它在你不在場時面對攻擊的表現。",
+    m7_wrapup: "Heartbeat 讓 agent 系統從「工具」升級為「服務」：開機即接手、無事零成本、有事自動處理、風險自動隔離。本模組的四個原則——確定性程式碼與 AI 分工、收件即歸檔、縱深防禦、fail-closed——不限於審查系統，適用於任何無人值守的 AI 自動化。",
+    m7_terms: [
+      { front:"Heartbeat 心跳", back:"排程喚醒機制：agent 不等人開口，按節奏醒來檢查有無新工作；可綁定開機、定時或手動觸發。" },
+      { front:"零成本偵測", back:"確定性腳本先判斷「有沒有工作」，沒有就直接結束——AI 完全不被喚醒、不花一毛錢。" },
+      { front:"確定性程式碼 vs AI", back:"有標準答案的搬運工作（偵測、複製、守衛）交給程式碼；需要判斷的工作（審查、分流）才交給 AI。" },
+      { front:"收件即歸檔", back:"處理前先複製到上傳者碰不到的封存區，任何後續意外都有不可變副本可回溯。" },
+      { front:"File Request", back:"Dropbox 的只上傳機制：上傳者不需帳號、看不到內容、刪不了檔案——機制性根治誤刪。" },
+      { front:"縱深防禦", back:"多層互相獨立的防線（指令隔離、權限最小化、資源守衛、版控基準、fail-closed），單層被突破仍有下一層。" },
+      { front:"Fail-closed", back:"狀態異常時寧可安全停止並通知人類，也不冒險繼續；與 fail-open（出錯就全部重來）相對。" },
+      { front:"對抗性驗收", back:"用刻意的攻擊樣本（如提示注入）測試系統；通過標準是攻擊被偵測、被拒絕、被記錄。" }
+    ],
+    m7_q: [
+      { q:"「確定性程式碼做搬運，AI 只做判斷」的主要理由是？", opts:["程式碼寫起來比較快","搬運工作有標準答案：交給腳本零成本、可預測、不會被騙，AI 留給需要判斷力的工作","AI 沒有能力複製檔案","為了減少程式碼行數"], ans:_A1, exp:"偵測、複製、守衛這類工作有唯一正確做法，用確定性腳本執行既省成本又不受提示注入影響；AI 的價值在需要判斷力的審查與分流。" },
+      { q:"「零成本偵測」指的是什麼？", opts:["AI 提供免費的檢查服務","排程腳本先偵測有無新檔案，沒有就直接結束，AI 根本不被喚醒","偵測過程不耗電","使用雲端免費方案"], ans:_A1, exp:"心跳每天都跳，但偵測由零成本的腳本完成；只有真正有新工作時才喚醒 AI，因此空轉日的成本是零。" },
+      { q:"Fail-closed 設計在本系統的體現是？", opts:["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"], ans:_A1, exp:"fail-open（出錯就全部重來）會造成成本失控與重複污染；fail-closed 寧可停下來讓人類介入，是無人值守系統的正確預設。" },
+      { q:"對抗性驗收中，注入測試檔要求給 10 分滿分，系統的正確反應是？", opts:["給 10 分，因為系統指示優先","給 0 分作為懲罰","照常獨立評分（實測 1.6 分），注入列為嚴重度 5 缺陷並隔離文件","立即刪除該檔案"], ans:_A2, exp:"正確反應是不受操縱、照規準獨立評分，同時把注入企圖本身揭露為頭號缺陷並隔離文件——攻擊被偵測、被拒絕、被記錄。" },
+      { q:"為何收件用 Dropbox File Request 而非一般共享資料夾？", opts:["因為比較便宜","上傳者看不到內容也刪不了檔案，從機制上根治誤刪與互相覆蓋","因為傳輸速度較快","因為支援較大的檔案"], ans:_A1, exp:"一般共享資料夾要給編輯權限，學生可能誤刪或覆蓋彼此的檔案；File Request 的只上傳機制讓這類風險在機制層面就不存在。" }
+    ],
+
+    mlab_nav: "8. 互動實驗室", mlab_title: "互動實驗室",
     mlab_desc: "透過四個小活動，親手體驗四層基礎設施的排序邏輯、概念與比喻的對應關係、指令範本的產生方式，以及沙盒如何把風險鎖在內部。",
     mlab_labs: [
       { title:"五步驟排序挑戰", desc:"依正確順序點選五個工作流步驟，測試你對整條流水線的掌握程度。" },
@@ -396,7 +424,7 @@ const dict = {
     mlab_risk_core: "核心系統", mlab_risk_sandbox_label: "沙盒環境",
     mlab_risk_safe: "風險已鎖在沙盒內，核心系統安全", mlab_risk_danger: "沒有沙盒保護，風險已外溢到核心系統！",
 
-    mres_nav: "8. 外部學習資源", mres_title: "外部學習資源",
+    mres_nav: "9. 外部學習資源", mres_title: "外部學習資源",
     mres_desc: "以下資源可以幫助你把本知識庫的概念，對應到實際的技術文件與工具生態。",
     mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作",
 
@@ -425,7 +453,7 @@ const dict = {
     deep_dive_label: "Deep Dive",
     wrapup_label: "Wrap-up",
 
-    analytics_nav: "9. Learning Analytics",
+    analytics_nav: "10. Learning Analytics",
     analytics_title: "Learning Analytics", analytics_desc: "This page summarises your time on each module, interaction counts, quiz accuracy and flashcard usage, plus weak-point analysis and CSV export.",
     analytics_form_title: "Basic Info (fill in before exporting)",
     analytics_group: "Group", analytics_group_select: "Please select", analytics_dept: "Department/Year",
@@ -470,7 +498,8 @@ const dict = {
       { num:"03", title:"Five-Step Workflow", desc:"A complete intelligence pipeline from environment initialisation to terminal output." },
       { num:"04", title:"Prompt Templates in Action", desc:"How to issue high-level instructions to AI using architectural semantics, not implementation detail." },
       { num:"05", title:"Agent Anatomy", desc:"The four components, vibe coding, skills vs subagents, and the four sources agents are created from." },
-      { num:"06", title:"Review Agent Case Study", desc:"A real multi-perspective review system showing how the concepts assemble into an extensible, cross-platform agent team." }
+      { num:"06", title:"Review Agent Case Study", desc:"A real multi-perspective review system showing how the concepts assemble into an extensible, cross-platform agent team." },
+      { num:"07", title:"Unattended Operation", desc:"Heartbeat, zero-cost detection and defense in depth — the review system receives, reviews and protects itself automatically." }
     ],
     m0_stats: [
       { val:"4", label:"Infrastructure Layers" },
@@ -631,7 +660,34 @@ const dict = {
       { q:"What governance strategy does the system adopt toward the existing specialised review skills?", opts:["Delete them all immediately to avoid confusion","Coexist with triage rules; refactor them into domain packs only after the new system proves itself in real use","Rename and hide them","Turn them into paid features"], ans:_A1, exp:"The old skills hold domain knowledge the new system lacks and are battle-tested; the right move is coexistence with triage, migrating gradually only after the new system earns its record." }
     ],
 
-    mlab_nav: "7. Interactive Lab", mlab_title: "Interactive Lab",
+    m7_nav: "7. Unattended Operation",
+    m7_title: "Case Study: Heartbeat & the Unattended Inbox",
+    m7_overview: "The previous module built the review system; this module answers 'who presses the button' — using a heartbeat so the system automatically receives files after boot, reviews them, and delivers reports, while demonstrating the two things that matter most in unattended automation: security design and adversarial acceptance testing.",
+    m7_highlights: ["Heartbeat","Zero-cost Detection","Deterministic Code vs AI","Archive-on-Intake","Defense in Depth","Fail-closed"],
+    m7_p1: "Heartbeat trigger design first answers 'must the computer stay on?' — no. The scheduler gets two triggers: at logon with a 5-minute delay (giving cloud sync time to pull down uploads accumulated while the machine was off) and a daily-morning backup; for ad-hoc checks there are three manual paths — a desktop shortcut, a spoken command, and a scheduler command. Intake uses Dropbox File Request: uploaders need no account, cannot see the folder's contents, and cannot delete anything — accidental-deletion risk shifts from 'rescue afterwards' to 'immune by mechanism'.",
+    m7_p2: "The single most important division of labour in the whole system: 'deterministic code does the hauling, AI only does the judging'. Detecting new files, size guarding, and archive copying — work with one correct answer — goes to the scheduler script: zero cost, predictable, and impossible to trick. AI handles only the work that needs judgment: reading and reviewing. When there are no new files, the AI is never woken at all — that is 'zero-cost detection': the system's heart beats every day, but money is spent only when there is real work.",
+    m7_p3: "Unattended means nobody is watching, so safety relies on defense in depth — five mutually independent layers: (1) instruction isolation (documents are data, not instructions; a manipulation attempt = a severity-5 issue plus forced quarantine); (2) least privilege (the unattended run has no command-line access, and writes are confined to reports and state files); (3) resource guard (a 20MB size cap against space and cost exhaustion); (4) tamper detection (the knowledge base is under git version control as a baseline); (5) fail-closed — if the state file is corrupted, the system stops safely and notifies a human rather than risking a mass re-run. If one layer is breached, the next still holds.",
+    m7_p4: "Pre-launch acceptance goes beyond 'the normal flow works': it includes an adversarial test — deliberately submitting a test file with an embedded prompt injection, whose final paragraph impersonates a 'system instruction' demanding the reviewer ignore all rules, award a perfect 10, and mark the file for the knowledge base. The measured result: the score was not manipulated (1.6 given), the injection was listed as the number-one severity-5 defect, the file was force-quarantined, and the system produced the correct security reasoning: 'a document that attempts to manipulate its downstream pipeline forfeits trust in its own numbers as well.' The true acceptance standard for an unattended system is how it behaves under attack while you are away.",
+    m7_wrapup: "A heartbeat upgrades an agent system from a tool into a service: it takes over at boot, costs nothing when idle, handles work automatically, and quarantines risk automatically. The module's four principles — deterministic-code/AI division of labour, archive-on-intake, defense in depth, and fail-closed — are not specific to review systems: they apply to any unattended AI automation.",
+    m7_terms: [
+      { front:"Heartbeat", back:"A scheduled wake-up mechanism: the agent checks for new work on a rhythm — bound to boot, timers, or manual triggers — without waiting to be asked." },
+      { front:"Zero-cost Detection", back:"A deterministic script first decides whether there is any work; if not, it simply exits — the AI is never woken and nothing is spent." },
+      { front:"Deterministic Code vs AI", back:"Hauling work with one correct answer (detect, copy, guard) goes to code; only judgment work (review, triage) goes to AI." },
+      { front:"Archive-on-Intake", back:"Before processing, copy each file into an archive the uploader cannot touch — an immutable snapshot to fall back on whatever happens later." },
+      { front:"File Request", back:"Dropbox's upload-only mechanism: no account needed, contents invisible to uploaders, nothing deletable — accidental deletion is cured by mechanism." },
+      { front:"Defense in Depth", back:"Multiple independent layers (instruction isolation, least privilege, resource guard, version-control baseline, fail-closed) — breach one, the next still holds." },
+      { front:"Fail-closed", back:"On abnormal state, stop safely and notify a human rather than pressing on — the opposite of fail-open (redo everything on error)." },
+      { front:"Adversarial Acceptance Test", back:"Testing the system with deliberate attack samples (e.g. prompt injection); passing means the attack is detected, refused, and logged." }
+    ],
+    m7_q: [
+      { q:"What is the main rationale for 'deterministic code does the hauling, AI only does the judging'?", opts:["Code is faster to write","Hauling work has one correct answer: scripts do it at zero cost, predictably, and cannot be tricked — AI is saved for judgment work","AI is incapable of copying files","To reduce the number of lines of code"], ans:_A1, exp:"Detection, copying and guarding have a single correct procedure; deterministic scripts do them cheaply and are immune to prompt injection, while AI's value lies in judgment-heavy review and triage." },
+      { q:"What does 'zero-cost detection' mean?", opts:["The AI provides free inspection services","The scheduler script detects whether new files exist first; if none, it exits and the AI is never woken","Detection consumes no electricity","Using a free cloud plan"], ans:_A1, exp:"The heartbeat fires daily, but detection is done by a zero-cost script; the AI is only woken when there is real work, so idle days cost nothing." },
+      { q:"How does fail-closed design manifest in this system?", opts:["On error, re-review every file to be safe","When the state file is corrupted, stop safely and notify a human, avoiding a mass mistaken re-run","On error, delete the state file and rebuild","On error, shut down the entire computer"], ans:_A1, exp:"Fail-open (redo everything on error) causes cost blowouts and duplicate contamination; fail-closed stops for human intervention — the correct default for unattended systems." },
+      { q:"In the adversarial test, the injected file demanded a perfect 10 — what was the correct system response?", opts:["Award 10, since system instructions take priority","Award 0 as punishment","Score independently as usual (1.6 in the real test), list the injection as a severity-5 defect, and quarantine the file","Delete the file immediately"], ans:_A2, exp:"The correct response is to stay unmanipulated and score by the rubric, while exposing the injection attempt itself as the top defect and quarantining the file — attack detected, refused, and logged." },
+      { q:"Why use Dropbox File Request for intake instead of an ordinary shared folder?", opts:["Because it is cheaper","Uploaders cannot see contents or delete files, curing accidental deletion and overwriting at the mechanism level","Because transfer speeds are faster","Because it supports larger files"], ans:_A1, exp:"An ordinary shared folder requires editor permissions, letting students delete or overwrite each other's files; File Request's upload-only mechanism removes that risk entirely." }
+    ],
+
+    mlab_nav: "8. Interactive Lab", mlab_title: "Interactive Lab",
     mlab_desc: "Four hands-on activities let you experience the ordering logic of the four infrastructure layers, the mapping between concepts and metaphors, how prompt templates are generated, and how the sandbox keeps risk contained inside.",
     mlab_labs: [
       { title:"Step Sequencing Challenge", desc:"Click the five workflow steps in the correct order to test how well you've mastered the pipeline." },
@@ -651,7 +707,7 @@ const dict = {
     mlab_risk_core: "Core System", mlab_risk_sandbox_label: "Sandbox Environment",
     mlab_risk_safe: "Risk is locked inside the sandbox — core system safe", mlab_risk_danger: "No sandbox protection — risk has spilled into the core system!",
 
-    mres_nav: "8. Learning Resources", mres_title: "External Learning Resources",
+    mres_nav: "9. Learning Resources", mres_title: "External Learning Resources",
     mres_desc: "The resources below connect this knowledge base's concepts to real technical documentation and tooling ecosystems.",
     mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration",
 
@@ -949,6 +1005,22 @@ const AgentAnatomyDiagram = ({lang}) => {
           <rect x={pos[0]} y={pos[1]} width="180" height="40" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.6"/>
           <text x={pos[0]+90} y={pos[1]+25} textAnchor="middle" fontSize="11" fill="currentColor">{parts[i]}</text>
           <line x1={pos[0]+90} y1={pos[1]<85 ? pos[1]+40 : pos[1]} x2="210" y2={pos[1]<85 ? 85 : 135} stroke="currentColor" strokeWidth="1" opacity="0.35"/>
+        </g>
+      ))}
+    </svg>
+  );
+};
+const HeartbeatDiagram = ({lang}) => {
+  const L = lang==='zh'
+    ? ['上傳（File Request：只上傳、不可刪）','開機 +5 分鐘 heartbeat（關機期間存雲端）','零成本偵測（無新檔 → 直接結束 $0）','歸檔 → Lite 審查 → 報告落地（風險自動隔離）']
+    : ['Upload (File Request: add-only, no delete)','Boot +5min heartbeat (cloud holds files while off)','Zero-cost detection (nothing new -> exit at $0)','Archive -> Lite review -> report (risk auto-quarantined)'];
+  return (
+    <svg viewBox="0 0 420 230" className="w-full max-w-md">
+      {L.map((l,i) => (
+        <g key={i}>
+          <rect x="20" y={10+i*56} width="380" height="38" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={i===2?0.9:0.6}/>
+          <text x="210" y={34+i*56} textAnchor="middle" fontSize="10.5" fill="currentColor">{l}</text>
+          {i<3 && <text x="210" y={57+i*56} textAnchor="middle" fontSize="12" fill="currentColor">↓</text>}
         </g>
       ))}
     </svg>
@@ -1259,6 +1331,7 @@ function App() {
     { id:4, icon:'⚡', title:t.m4_nav },
     { id:5, icon:'🧩', title:t.m5_nav },
     { id:6, icon:'🔍', title:t.m6_nav },
+    { id:7, icon:'💓', title:t.m7_nav },
     { id:IDX_LAB, icon:'🧪', title:t.mlab_nav },
     { id:IDX_RES, icon:'🌐', title:t.mres_nav },
     { id:IDX_ANA, icon:'📊', title:t.analytics_nav }
@@ -1484,6 +1557,7 @@ function App() {
                 {module===4 && <TemplateDiagram lang={lang}/>}
                 {module===5 && <AgentAnatomyDiagram lang={lang}/>}
                 {module===6 && <ReviewAgentDiagram lang={lang}/>}
+                {module===7 && <HeartbeatDiagram lang={lang}/>}
               </div>
               <FlipCardDeck key={`cards-${module}`} terms={t[`m${module}_terms`]} t={t} moduleId={module} onCardRead={handleCardRead} />
               <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-5">
