@@ -2,7 +2,7 @@
 
 ## PWA 快取版本號 — 每次改動需精快取的檔案都要記得升版
 
-`sw.js` 目前的 `CACHE_NAME` 是 **`caiw-shell-v6`**（2026-07-29 因新增 M9 發布管線模組升版）。
+`sw.js` 目前的 `CACHE_NAME` 是 **`caiw-shell-v7`**（2026-07-29 因 M9 增補「友善防禦」設計五升版）。
 
 只要修改了以下任一被 service worker 預先快取（`APP_SHELL`）的檔案，就必須把 `sw.js` 裡的 `CACHE_NAME` 版本號往上加一（`v1` → `v2`），否則已經造訪過的使用者會因為快取策略是 stale-while-revalidate、且只有版本號改變才會清除舊快取，而一直看到舊版本：
 

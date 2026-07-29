@@ -723,6 +723,15 @@ const TOPICS = [
         ans: A[1],
         expZh: "閱讀器端讓舊晨報立即獲得修正效果，SOP 端讓新晨報從源頭合格——相容過去與約束未來各司其職（KB 第九部分）。",
         expEn: "The reader gives old briefs the fix now; the SOP makes new briefs compliant at the source — compatibility for the past, constraint for the future (KB Part 9)."
+      },
+      {
+        qZh: "閱讀站補上友善防禦後，帶來的兩個治理教訓是？",
+        qEn: "What two governance lessons came from retrofitting friendly defense onto the reader?",
+        optsZh: ["防禦越多越好，速度其次","同家族站台的防禦策略要一致（列入維運稽核），且刻意的取捨要揭露讓人拍板","防禦與閱讀體驗必然衝突，只能二選一","只有付費網站才需要防禦機制"],
+        optsEn: ["More defense is always better, speed second","Sibling sites' defense policies must stay consistent (audited on the ops checklist), and deliberate trade-offs must be disclosed for the human to rule on","Defense and reading experience inevitably conflict","Only paid websites need defense mechanisms"],
+        ans: A[1],
+        expZh: "缺口由使用者發現而非系統稽核——一致性要靠清單不靠運氣；省略防禦是未經討論的刻意取捨——agent 應主動揭露設計省略，把決定權留給人（KB 第九部分設計五）。",
+        expEn: "The gap was found by the user, not an audit — parity needs a checklist, not luck; the omission was an undiscussed trade-off — agents should surface design omissions and leave the ruling to the human (KB Part 9, Design 5)."
       }
     ]
   }
@@ -968,8 +977,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、50 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 50 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、51 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 51 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
