@@ -115,7 +115,7 @@ const _d = (token) => {
 const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
 
 /* ---------- module numbering ---------- */
-const NUM_LEARN = 8;
+const NUM_LEARN = 9;
 const TOTAL = 1 + NUM_LEARN + 3;
 const IDX_LAB = NUM_LEARN + 1;
 const IDX_RES = NUM_LEARN + 2;
@@ -170,7 +170,7 @@ const dict = {
     deep_dive_label: "Deep Dive 深入解析",
     wrapup_label: "Wrap-up 總結",
 
-    analytics_nav: "11. 學習歷程分析",
+    analytics_nav: "12. 學習歷程分析",
     analytics_title: "學習歷程分析", analytics_desc: "本頁彙整你在各模組的停留時間、互動次數、測驗答對率與學習卡使用率，並提供弱點分析與 CSV 匯出。",
     analytics_form_title: "基本資料（匯出前請填寫）",
     analytics_group: "組別", analytics_group_select: "請選擇", analytics_dept: "系級",
@@ -217,7 +217,8 @@ const dict = {
       { num:"05", title:"Agent 解剖學", desc:"四件套、Vibe Coding、Skill 與 Subagent 的差異，以及 Agent 的四種創造來源。" },
       { num:"06", title:"審查代理人實戰", desc:"以真實建置的多視角審查系統，示範概念如何組裝成可擴充、跨平台的 Agent 團隊。" },
       { num:"07", title:"無人值守實戰", desc:"Heartbeat、零成本偵測與縱深防禦——讓審查系統自動接收、自動審查、安全運作。" },
-      { num:"08", title:"維運與治理", desc:"同步義務、備份與可見性、設定先驗證、擴充後回歸測試——上線之後的四條紀律。" }
+      { num:"08", title:"維運與治理", desc:"同步義務、備份與可見性、設定先驗證、擴充後回歸測試——上線之後的四條紀律。" },
+      { num:"09", title:"發布管線實戰", desc:"產製與發布分離、快取分策、渲染後增強、受眾分層——把系統產出升級為公開刊物。" }
     ],
     m0_stats: [
       { val:"4", label:"基礎設施層" },
@@ -432,7 +433,34 @@ const dict = {
       { q:"測試檔標題寫「可刪除」但系統沒有刪除，只記錄在案——這展現了什麼？", opts:["系統故障，應該要刪除","精確防禦：分得清描述性註記與真指令，不遵從也不過度反應","系統沒有刪除檔案的權限","系統沒讀到標題"], ans:_A1, exp:"成熟的防禦不在「擋掉多少」而在判斷精度：把「像指令的資料」記錄下來但不執行，既不被操縱也不過度防禦。" }
     ],
 
-    mlab_nav: "9. 互動實驗室", mlab_title: "互動實驗室",
+    m9_nav: "9. 發布管線實戰",
+    m9_title: "實戰案例：從系統到刊物——晨報閱讀站",
+    m9_overview: "晨報原本只是硬碟裡的 Markdown 檔；本模組示範如何把無人值守系統的產出升級為公開刊物：產製與發布分離的半自動管線、內容與外殼分離的快取策略、把 Markdown 變成閱讀體驗的「渲染後增強」，以及一輪由真實使用者回饋驅動的介面迭代。",
+    m9_highlights: ["產製與發布分離","半自動放行","內容/外殼快取分離","渲染後增強","受眾分層","雙層修正"],
+    m9_p1: "設計一：產製與發布分離。heartbeat 每天自動產出晨報（無人值守），但「公開上架」是另一件事——它涉及對外發言的責任。解法是半自動管線：產出後檔案只落在本機；你審閱後按一下發布腳本，確定性程式碼負責複製、重建清單、推送，約兩分鐘後上線。這把無人值守的「產製」與人類的「發布把關」接成一條有治理的管線——授權給機器的是勞務，保留給人的是判斷。",
+    m9_p2: "設計二：快取策略要跟著資料性質走。閱讀站的「外殼」（介面程式）用版本化快取，改版才升版；「內容」（每日晨報）走 network-first——上線就是最新，離線退回已讀過的版本。同一個 PWA 裡兩種策略並存，發布每日內容完全不需要動快取版本。這與教材站「整站版本化」形成對照：教材是低頻更新的整體，刊物是高頻更新的流。",
+    m9_p3: "設計三：渲染後增強（render-then-enhance）。晨報源頭保持純 Markdown——這是對「AI 產出格式會漂移」的務實妥協；閱讀器先把 Markdown 渲染成 HTML，再用程式增強：小節包成卡片、〔新增〕〔待查核〕轉成徽章、領域標記變圖示、產製說明與研究者筆記摺疊收合。內容與呈現徹底解耦：改版面不用動任何一期晨報，舊晨報也自動獲得新體驗。",
+    m9_p4: "設計四：受眾分層與迭代方法。同一份晨報服務兩種讀者：一般讀者看新聞卡片；研究者展開預設收合的「決策行動筆記」（展開先見提醒框）——但要明白「摺疊不等於保密」：原始檔在公開 repo 依然可見，版面隱藏是閱讀動線的選擇，不是隱私機制。介面迭代來自真實使用者的七點回饋，修正採雙層模式：閱讀器端相容處理既有內容（舊晨報立即生效）、產製規範端約束未來產出（新晨報從源頭合格）——顯示端管相容、產製端管規範。另一個實戰教訓：requestAnimationFrame 綁定渲染循環，分頁不可見時會整個凍結，節流這類邏輯用計時器比較穩。",
+    m9_wrapup: "從系統到刊物的四個設計：產製與發布分離（機器勞務、人類把關）、快取隨資料性質分策（外殼版本化、內容 network-first）、渲染後增強（內容與呈現解耦）、受眾分層（摺疊而非刪除，且明白摺疊≠保密）。迭代的雙層修正——顯示端相容過去、規範端約束未來——讓刊物持續演進而不破壞歷史。",
+    m9_terms: [
+      { front:"產製與發布分離", back:"無人值守負責產出，人類審後放行負責公開——對外發言的責任留在人身上。" },
+      { front:"半自動放行", back:"審閱後一鍵發布：確定性腳本執行複製、清單重建與推送，人只做判斷不做勞務。" },
+      { front:"內容/外殼快取分離", back:"外殼版本化快取、內容 network-first——每日發布內容不需要升快取版本。" },
+      { front:"渲染後增強", back:"源頭保持 Markdown，閱讀器渲染後再加卡片、徽章、摺疊——內容與呈現解耦。" },
+      { front:"受眾分層", back:"同一內容以摺疊區塊服務不同讀者：一般讀者看卡片，研究者展開進階筆記。" },
+      { front:"摺疊≠保密", back:"公開 repo 的原始檔仍可見；版面隱藏是動線選擇，不是隱私機制。" },
+      { front:"雙層修正", back:"顯示端相容既有內容（舊的立即生效）、產製端規範未來產出（新的源頭合格）。" },
+      { front:"rAF 隱藏分頁陷阱", back:"requestAnimationFrame 綁定渲染循環，分頁不可見即凍結；與渲染無關的節流用計時器。" }
+    ],
+    m9_q: [
+      { q:"晨報發布為何採「半自動」而非全自動？", opts:["因為腳本寫不出全自動","公開發言的責任留給人：機器負責產製勞務，人審閱後放行","因為 GitHub 不允許自動推送","為了節省運算成本"], ans:_A1, exp:"無人值守可以授權「產製」，但公開上架涉及對外發言的責任——半自動讓機器做勞務、人做判斷，是治理選擇而非技術限制。" },
+      { q:"閱讀站的晨報內容為何走 network-first 而非版本化快取？", opts:["因為版本化快取比較貴","高頻更新的內容上線即最新、離線退回已讀版本，且每日發布不需升快取版本","因為 Markdown 檔不能被快取","因為讀者不需要離線功能"], ans:_A1, exp:"快取策略要跟資料性質走：外殼低頻改版適合版本化，內容是每日更新的流，network-first 讓發布零快取負擔。" },
+      { q:"「渲染後增強」的核心好處是什麼？", opts:["讓網頁載入速度更快","減少程式碼行數","內容與呈現解耦：改版面不動歷史內容，舊晨報自動獲得新體驗","不需要使用 Markdown"], ans:_A2, exp:"源頭保持純 Markdown、呈現交給閱讀器後製——版面演進與內容歷史互不牽制，也容忍 AI 產出的格式漂移。" },
+      { q:"「摺疊研究者筆記」提供了什麼、不提供什麼？", opts:["提供保密，不提供閱讀便利","提供版面分層的閱讀動線，不提供保密（原始檔在公開 repo 仍可見）","提供加密，不提供搜尋","提供權限控制，不提供離線閱讀"], ans:_A1, exp:"摺疊是為一般讀者簡化動線的版面選擇；真要限制存取得換架構（私有託管、登入機制），不能靠介面隱藏。" },
+      { q:"介面迭代的「雙層修正」分工是？", opts:["前端修一半、後端修一半","顯示端相容既有內容，產製端（SOP）約束未來產出","先修簡單的、再修困難的","使用者修內容、開發者修程式"], ans:_A1, exp:"閱讀器端讓舊晨報立即獲得修正效果，SOP 端讓新晨報從源頭合格——相容過去與約束未來各司其職，演進不破壞歷史。" }
+    ],
+
+    mlab_nav: "10. 互動實驗室", mlab_title: "互動實驗室",
     mlab_desc: "透過四個小活動，親手體驗四層基礎設施的排序邏輯、概念與比喻的對應關係、指令範本的產生方式，以及沙盒如何把風險鎖在內部。",
     mlab_labs: [
       { title:"五步驟排序挑戰", desc:"依正確順序點選五個工作流步驟，測試你對整條流水線的掌握程度。" },
@@ -452,7 +480,7 @@ const dict = {
     mlab_risk_core: "核心系統", mlab_risk_sandbox_label: "沙盒環境",
     mlab_risk_safe: "風險已鎖在沙盒內，核心系統安全", mlab_risk_danger: "沒有沙盒保護，風險已外溢到核心系統！",
 
-    mres_nav: "10. 外部學習資源", mres_title: "外部學習資源",
+    mres_nav: "11. 外部學習資源", mres_title: "外部學習資源",
     mres_desc: "以下資源可以幫助你把本知識庫的概念，對應到實際的技術文件與工具生態。",
     mres_group1: "容器化與沙盒技術", mres_group2: "Agent 與自動化協作", mres_group3: "配套自我測驗",
 
@@ -481,7 +509,7 @@ const dict = {
     deep_dive_label: "Deep Dive",
     wrapup_label: "Wrap-up",
 
-    analytics_nav: "11. Learning Analytics",
+    analytics_nav: "12. Learning Analytics",
     analytics_title: "Learning Analytics", analytics_desc: "This page summarises your time on each module, interaction counts, quiz accuracy and flashcard usage, plus weak-point analysis and CSV export.",
     analytics_form_title: "Basic Info (fill in before exporting)",
     analytics_group: "Group", analytics_group_select: "Please select", analytics_dept: "Department/Year",
@@ -528,7 +556,8 @@ const dict = {
       { num:"05", title:"Agent Anatomy", desc:"The four components, vibe coding, skills vs subagents, and the four sources agents are created from." },
       { num:"06", title:"Review Agent Case Study", desc:"A real multi-perspective review system showing how the concepts assemble into an extensible, cross-platform agent team." },
       { num:"07", title:"Unattended Operation", desc:"Heartbeat, zero-cost detection and defense in depth — the review system receives, reviews and protects itself automatically." },
-      { num:"08", title:"Operations & Governance", desc:"Sync obligation, backup & visibility, verify-before-configure, and regression testing — the four disciplines after go-live." }
+      { num:"08", title:"Operations & Governance", desc:"Sync obligation, backup & visibility, verify-before-configure, and regression testing — the four disciplines after go-live." },
+      { num:"09", title:"Publishing Pipeline", desc:"Produce/publish separation, split caching, render-then-enhance, audience layering — turning system output into a publication." }
     ],
     m0_stats: [
       { val:"4", label:"Infrastructure Layers" },
@@ -743,7 +772,34 @@ const dict = {
       { q:"The test file's title said 'deletable', yet the system only logged it without deleting — what does this demonstrate?", opts:["A system fault; it should have deleted","Precise defense: telling descriptive annotations from real instructions, neither obeying nor over-reacting","The system lacked permission to delete files","The system failed to read the title"], ans:_A1, exp:"Mature defense is about judgment precision: recording instruction-like data without executing it — neither manipulated nor over-defensive." }
     ],
 
-    mlab_nav: "9. Interactive Lab", mlab_title: "Interactive Lab",
+    m9_nav: "9. Publishing Pipeline",
+    m9_title: "Case Study: From System to Publication — the Daily Brief Reader",
+    m9_overview: "The daily brief used to be just a Markdown file on a hard drive. This module shows how an unattended system's output gets upgraded into a public publication: a semi-automatic pipeline separating production from publishing, split caching for shell versus content, 'render-then-enhance' turning Markdown into a reading experience, and one round of interface iteration driven by real user feedback.",
+    m9_highlights: ["Produce/Publish Separation","Semi-automatic Release","Shell/Content Split Caching","Render-then-Enhance","Audience Layering","Two-layer Fixes"],
+    m9_p1: "Design 1: separate production from publishing. The heartbeat produces the brief automatically every day (unattended), but putting it online is a different matter — it carries the responsibility of speaking publicly. The solution is a semi-automatic pipeline: output lands only on the local machine; after you review it, one click runs the publish script, and deterministic code copies the file, rebuilds the manifest and pushes — live in about two minutes. This joins unattended production with human release-gating into one governed pipeline: what is delegated to the machine is labour; what stays with the human is judgment.",
+    m9_p2: "Design 2: caching strategy must follow the nature of the data. The reader's shell (the interface code) uses versioned caching — bump only on redesign; the content (daily briefs) is network-first — always fresh when online, falling back to previously read issues offline. Two strategies coexist in one PWA, and publishing daily content requires no cache bump at all. Contrast this with the course site's whole-site versioning: course material is a low-frequency-update whole; a publication is a high-frequency stream.",
+    m9_p3: "Design 3: render-then-enhance. The brief's source stays plain Markdown — a pragmatic concession to the fact that AI output formats drift. The reader first renders Markdown to HTML, then enhances programmatically: sections become cards, tags like [new] and [verify] become badges, domain markers become icons, production metadata and researcher notes fold away. Content and presentation are fully decoupled: redesigning the layout touches no past issue, and old briefs automatically gain the new experience.",
+    m9_p4: "Design 4: audience layering, plus the iteration method. One brief serves two audiences: general readers see news cards; researchers expand the collapsed-by-default 'decision notes' (with a disclaimer shown first). But understand that folding is not secrecy: the raw file remains visible in the public repo — layout hiding is a reading-flow choice, not a privacy mechanism. Interface iteration came from seven points of real user feedback, fixed in two layers: the reader side handles existing content compatibly (old briefs benefit immediately), while the production spec constrains future output (new briefs are born compliant). One more field lesson: requestAnimationFrame is bound to the rendering loop and freezes entirely when a tab is hidden — throttle non-rendering logic with timers instead.",
+    m9_wrapup: "Four designs take a system's output to a publication: produce/publish separation (machine labour, human gating), caching split by data nature (versioned shell, network-first content), render-then-enhance (content decoupled from presentation), and audience layering (fold, don't delete — and know that folding is not secrecy). Two-layer fixing — display side for the past, spec side for the future — lets a publication evolve without breaking its history.",
+    m9_terms: [
+      { front:"Produce/Publish Separation", back:"Unattended systems produce; humans review and release — the responsibility of public speech stays with people." },
+      { front:"Semi-automatic Release", back:"One click after review: a deterministic script copies, rebuilds the manifest and pushes — humans judge, scripts labour." },
+      { front:"Shell/Content Split Caching", back:"Versioned cache for the shell, network-first for content — daily publishing needs no cache bump." },
+      { front:"Render-then-Enhance", back:"Keep the source as Markdown; the reader renders then adds cards, badges and folds — content decoupled from presentation." },
+      { front:"Audience Layering", back:"One document serves different readers via folded blocks: cards for general readers, expandable notes for researchers." },
+      { front:"Folding ≠ Secrecy", back:"The raw file in a public repo stays visible; layout hiding is a flow choice, not a privacy mechanism." },
+      { front:"Two-layer Fixes", back:"Display side keeps existing content compatible (old issues benefit now); production spec constrains future output (new issues born compliant)." },
+      { front:"rAF Hidden-tab Trap", back:"requestAnimationFrame is bound to the render loop and freezes in hidden tabs; throttle non-render logic with timers." }
+    ],
+    m9_q: [
+      { q:"Why is brief publishing semi-automatic rather than fully automatic?", opts:["Because a fully automatic script couldn't be written","The responsibility of public speech stays with the human: machines do the production labour, a person reviews and releases","Because GitHub forbids automated pushes","To save computing costs"], ans:_A1, exp:"Unattended systems can be trusted with production, but going public carries speech responsibility — semi-automation is a governance choice, not a technical limit." },
+      { q:"Why does the reader serve brief content network-first instead of versioned caching?", opts:["Because versioned caching is more expensive","High-frequency content should be fresh when online and fall back offline, and daily publishing then needs no cache bump","Because Markdown files cannot be cached","Because readers don't need offline support"], ans:_A1, exp:"Caching follows data nature: the shell changes rarely (versioned), the content is a daily stream (network-first), making publication cache-free." },
+      { q:"What is the core benefit of 'render-then-enhance'?", opts:["Faster page loads","Fewer lines of code","Content decoupled from presentation: redesigns touch no past issue, and old briefs gain the new experience automatically","No need to use Markdown"], ans:_A2, exp:"Source stays plain Markdown while the reader post-processes presentation — layout evolution and content history never constrain each other." },
+      { q:"What does folding the researcher notes provide — and not provide?", opts:["Secrecy but not convenience","A layered reading flow, but not secrecy (the raw file stays visible in the public repo)","Encryption but not search","Access control but not offline reading"], ans:_A1, exp:"Folding simplifies the flow for general readers; real access restriction requires a different architecture, not interface hiding." },
+      { q:"How is the 'two-layer fix' divided?", opts:["Half frontend, half backend","Display side keeps existing content compatible; the production spec (SOP) constrains future output","Easy fixes first, hard fixes later","Users fix content, developers fix code"], ans:_A1, exp:"The reader gives old briefs the fix immediately; the SOP makes new briefs compliant at the source — compatibility for the past, constraint for the future." }
+    ],
+
+    mlab_nav: "10. Interactive Lab", mlab_title: "Interactive Lab",
     mlab_desc: "Four hands-on activities let you experience the ordering logic of the four infrastructure layers, the mapping between concepts and metaphors, how prompt templates are generated, and how the sandbox keeps risk contained inside.",
     mlab_labs: [
       { title:"Step Sequencing Challenge", desc:"Click the five workflow steps in the correct order to test how well you've mastered the pipeline." },
@@ -763,7 +819,7 @@ const dict = {
     mlab_risk_core: "Core System", mlab_risk_sandbox_label: "Sandbox Environment",
     mlab_risk_safe: "Risk is locked inside the sandbox — core system safe", mlab_risk_danger: "No sandbox protection — risk has spilled into the core system!",
 
-    mres_nav: "10. Learning Resources", mres_title: "External Learning Resources",
+    mres_nav: "11. Learning Resources", mres_title: "External Learning Resources",
     mres_desc: "The resources below connect this knowledge base's concepts to real technical documentation and tooling ecosystems.",
     mres_group1: "Containerization & Sandboxing", mres_group2: "Agents & Automated Collaboration", mres_group3: "Companion Self-Quiz",
 
@@ -801,7 +857,8 @@ const RESOURCES = [
     { label:'Claude Code — Product Page', url:'https://claude.com/claude-code', desc:{ zh:'Claude Code 產品介紹頁面。', en:'Claude Code product overview page.' } }
   ]},
   { group:'mres_group3', items: [
-    { label:'CAIW Topic Quiz 主題測驗（8 主題 × 45 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M8 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M8: per-question explanations, dashboard with accuracy evolution, CSV export.' } }
+    { label:'CAIW Topic Quiz 主題測驗（9 主題 × 50 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M9 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M9: per-question explanations, dashboard with accuracy evolution, CSV export.' } },
+    { label:'駱駱精選晨報（M9 案例的實際成品）', url:'https://lolopodcast.github.io/daily-brief/', desc:{ zh:'M9 發布管線的真實產出：每日 AI 彙整晨報的公開閱讀站。', en:"The real output of the M9 pipeline: the public reader for LoLo's daily AI-curated brief." } }
   ]}
 ];
 
@@ -1094,6 +1151,22 @@ const OpsLoopDiagram = ({lang}) => {
       {L.map((l,i) => (
         <g key={i}>
           <rect x="30" y={10+i*56} width="360" height="38" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={i===0?0.9:0.6}/>
+          <text x="210" y={34+i*56} textAnchor="middle" fontSize="10.5" fill="currentColor">{l}</text>
+          {i<4 && <text x="210" y={57+i*56} textAnchor="middle" fontSize="12" fill="currentColor">↓</text>}
+        </g>
+      ))}
+    </svg>
+  );
+};
+const PublishPipelineDiagram = ({lang}) => {
+  const L = lang==='zh'
+    ? ['heartbeat 產出晨報（僅本機，不公開）','人工審閱（半自動把關：判斷留給人）','一鍵發布：複製 → 重建清單 → 推送（確定性腳本）','上線：外殼版本化快取｜內容 network-first','讀者體驗：卡片・徽章・摺疊（渲染後增強）']
+    : ['Heartbeat produces brief (local only)','Human review (semi-auto gate: judgment stays human)','One-click publish: copy -> manifest -> push (script)','Live: versioned shell | network-first content','Reader: cards · badges · folds (render-then-enhance)'];
+  return (
+    <svg viewBox="0 0 420 290" className="w-full max-w-md">
+      {L.map((l,i) => (
+        <g key={i}>
+          <rect x="20" y={10+i*56} width="380" height="38" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={i===1?0.9:0.6}/>
           <text x="210" y={34+i*56} textAnchor="middle" fontSize="10.5" fill="currentColor">{l}</text>
           {i<4 && <text x="210" y={57+i*56} textAnchor="middle" fontSize="12" fill="currentColor">↓</text>}
         </g>
@@ -1408,6 +1481,7 @@ function App() {
     { id:6, icon:'🔍', title:t.m6_nav },
     { id:7, icon:'💓', title:t.m7_nav },
     { id:8, icon:'🛠️', title:t.m8_nav },
+    { id:9, icon:'📰', title:t.m9_nav },
     { id:IDX_LAB, icon:'🧪', title:t.mlab_nav },
     { id:IDX_RES, icon:'🌐', title:t.mres_nav },
     { id:IDX_ANA, icon:'📊', title:t.analytics_nav }
@@ -1635,6 +1709,7 @@ function App() {
                 {module===6 && <ReviewAgentDiagram lang={lang}/>}
                 {module===7 && <HeartbeatDiagram lang={lang}/>}
                 {module===8 && <OpsLoopDiagram lang={lang}/>}
+                {module===9 && <PublishPipelineDiagram lang={lang}/>}
               </div>
               <FlipCardDeck key={`cards-${module}`} terms={t[`m${module}_terms`]} t={t} moduleId={module} onCardRead={handleCardRead} />
               <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-5">

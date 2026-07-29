@@ -671,6 +671,60 @@ const TOPICS = [
         expEn: "Mature defense is judgment precision: recording instruction-like data without executing it — neither manipulated nor over-defensive (KB Part 8)."
       }
     ]
+  },
+  {
+    id: "publishing_pipeline",
+    titleZh: "發布管線",
+    titleEn: "Publishing Pipeline",
+    descZh: "產製與發布分離、快取分策、渲染後增強、受眾分層、雙層修正。",
+    descEn: "Produce/publish separation, split caching, render-then-enhance, audience layering, two-layer fixes.",
+    questions: [
+      {
+        qZh: "晨報發布為何採「半自動」而非全自動？",
+        qEn: "Why is brief publishing semi-automatic rather than fully automatic?",
+        optsZh: ["因為腳本寫不出全自動","公開發言的責任留給人：機器負責產製勞務，人審閱後放行","因為 GitHub 不允許自動推送","為了節省運算成本"],
+        optsEn: ["Because a fully automatic script couldn't be written","The responsibility of public speech stays with the human: machines do the production labour, a person reviews and releases","Because GitHub forbids automated pushes","To save computing costs"],
+        ans: A[1],
+        expZh: "無人值守可以授權「產製」，但公開上架涉及對外發言的責任——半自動是治理選擇而非技術限制（KB 第九部分設計一）。",
+        expEn: "Unattended systems can be trusted with production, but going public carries speech responsibility — a governance choice, not a technical limit (KB Part 9, Design 1)."
+      },
+      {
+        qZh: "閱讀站的晨報內容為何走 network-first 而非版本化快取？",
+        qEn: "Why does the reader serve brief content network-first instead of versioned caching?",
+        optsZh: ["因為版本化快取比較貴","高頻更新的內容上線即最新、離線退回已讀版本，且每日發布不需升快取版本","因為 Markdown 檔不能被快取","因為讀者不需要離線功能"],
+        optsEn: ["Because versioned caching is more expensive","High-frequency content should be fresh when online and fall back offline, and daily publishing then needs no cache bump","Because Markdown files cannot be cached","Because readers don't need offline support"],
+        ans: A[1],
+        expZh: "快取策略跟著資料性質走：外殼低頻改版用版本化，內容是每日更新的流用 network-first——發布零快取負擔（KB 第九部分設計二）。",
+        expEn: "Caching follows data nature: versioned for the rarely-changing shell, network-first for the daily stream — cache-free publishing (KB Part 9, Design 2)."
+      },
+      {
+        qZh: "「渲染後增強」的核心好處是什麼？",
+        qEn: "What is the core benefit of 'render-then-enhance'?",
+        optsZh: ["讓網頁載入速度更快","減少程式碼行數","內容與呈現解耦：改版面不動歷史內容，舊晨報自動獲得新體驗","不需要使用 Markdown"],
+        optsEn: ["Faster page loads","Fewer lines of code","Content decoupled from presentation: redesigns touch no past issue, and old briefs gain the new experience automatically","No need to use Markdown"],
+        ans: A[2],
+        expZh: "源頭保持純 Markdown、呈現交給閱讀器後製——版面演進與內容歷史互不牽制，也容忍 AI 產出的格式漂移（KB 第九部分設計三）。",
+        expEn: "Source stays Markdown while the reader post-processes presentation — layout evolution and content history never constrain each other (KB Part 9, Design 3)."
+      },
+      {
+        qZh: "「摺疊研究者筆記」提供了什麼、不提供什麼？",
+        qEn: "What does folding the researcher notes provide — and not provide?",
+        optsZh: ["提供保密，不提供閱讀便利","提供版面分層的閱讀動線，不提供保密（原始檔在公開 repo 仍可見）","提供加密，不提供搜尋","提供權限控制，不提供離線閱讀"],
+        optsEn: ["Secrecy but not convenience","A layered reading flow, but not secrecy (the raw file stays visible in the public repo)","Encryption but not search","Access control but not offline reading"],
+        ans: A[1],
+        expZh: "摺疊是為一般讀者簡化動線的版面選擇；真要限制存取得換架構（私有託管、登入機制），不能靠介面隱藏（KB 第九部分設計四）。",
+        expEn: "Folding simplifies the flow; real access restriction needs a different architecture, not interface hiding (KB Part 9, Design 4)."
+      },
+      {
+        qZh: "介面迭代的「雙層修正」分工是？",
+        qEn: "How is the 'two-layer fix' divided?",
+        optsZh: ["前端修一半、後端修一半","顯示端相容既有內容，產製端（SOP）約束未來產出","先修簡單的、再修困難的","使用者修內容、開發者修程式"],
+        optsEn: ["Half frontend, half backend","Display side keeps existing content compatible; the production spec (SOP) constrains future output","Easy fixes first, hard fixes later","Users fix content, developers fix code"],
+        ans: A[1],
+        expZh: "閱讀器端讓舊晨報立即獲得修正效果，SOP 端讓新晨報從源頭合格——相容過去與約束未來各司其職（KB 第九部分）。",
+        expEn: "The reader gives old briefs the fix now; the SOP makes new briefs compliant at the source — compatibility for the past, constraint for the future (KB Part 9)."
+      }
+    ]
   }
 ];
 const TOTAL_Q = TOPICS.reduce((s, t) => s + t.questions.length, 0);
@@ -914,8 +968,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 8 個主題、45 道題目，對應知識庫 M1–M8。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="8 topics · 45 questions, mapped to KB modules M1–M8. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、50 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 50 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
