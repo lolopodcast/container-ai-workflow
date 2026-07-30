@@ -9,7 +9,7 @@
 //   Bump CACHE_NAME's version suffix (v1 -> v2 -> v3 ...). See the big
 //   comment at the bottom for why this is not optional.
 
-const CACHE_NAME = 'caiw-shell-v8';
+const CACHE_NAME = 'caiw-shell-v9';
 const APP_SHELL = [
   './',
   './index.html',

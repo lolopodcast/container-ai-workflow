@@ -581,6 +581,24 @@ const TOPICS = [
         expEn: "The heartbeat fires daily, but detection is a zero-cost script; the AI wakes only for real work, so idle days cost nothing."
       },
       {
+        qZh: "心跳要「零成本結束」必須滿足哪些條件？",
+        qEn: "Which conditions must hold for a heartbeat to exit at zero cost?",
+        optsZh: ["只要收件夾沒有新檔案就夠了","收件夾無新檔案 且 今日的定期產出已完成，兩者同時成立","只要今天已經跑過一次心跳","只要使用者沒有手動觸發"],
+        optsEn: ["No new files in the intake folders is enough","No new files AND today's scheduled output already complete — both simultaneously","Just that a heartbeat already ran today","Just that the user did not trigger it manually"],
+        ans: A[1],
+        expZh: "兩個條件缺一不可：若晨報尚未產出（當日旗標不存在），即使沒有新檔案也會喚醒 AI——這正是失敗後能自動重試的原因（KB 第七部分）。",
+        expEn: "Both are required: with no done-marker for today, the AI is woken even without new files — exactly what enables automatic retry after a failure (KB Part 7)."
+      },
+      {
+        qZh: "為何零成本偵測的判定條件都設計成「檔案系統回答得出的問題」？",
+        qEn: "Why are all zero-cost detection tests designed as questions the file system can answer?",
+        optsZh: ["因為程式設計師偷懶","因為一旦判定需要 AI 讀懂內容才能決定，零成本的承諾就破了","因為檔案系統比 AI 準確","因為這是作業系統的規定"],
+        optsEn: ["Because the programmer was lazy","Because the moment a test needs AI to understand content, the zero-cost promise is broken","Because file systems are more accurate than AI","Because the operating system requires it"],
+        ans: A[1],
+        expZh: "存在嗎、多大、何時改的——這些都能零成本回答；便宜的守門員，前提是門檻本身不需要智慧（KB 第七部分）。",
+        expEn: "Exists? How big? When modified? — all free to answer. A cheap gatekeeper depends on the gate itself needing no intelligence (KB Part 7)."
+      },
+      {
         qZh: "Fail-closed 設計在收件匣系統的體現是？",
         qEn: "How does fail-closed design manifest in the inbox system?",
         optsZh: ["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"],
@@ -995,8 +1013,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、53 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 53 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、55 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 55 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
