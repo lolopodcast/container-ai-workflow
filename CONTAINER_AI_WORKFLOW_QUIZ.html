@@ -615,6 +615,24 @@ const TOPICS = [
         ans: A[1],
         expZh: "歸檔在審查之前、由排程器的確定性程式碼執行——即使來源檔案之後被動過或出任何意外，封存副本永遠都在（KB 第七部分）。",
         expEn: "Archiving happens before review, done by deterministic scheduler code — whatever later happens to the source, the archived copy remains (KB Part 7)."
+      },
+      {
+        qZh: "排程腳本「在呼叫 AI 之前就先寫今日已完成旗標」會造成什麼後果？",
+        qEn: "What happens when a scheduler script writes the 'done for today' marker before invoking the AI?",
+        optsZh: ["節省一次檔案寫入，無副作用","AI 失敗時當日仍被視為完成而永久跳過，且無人知情（靜默失敗）","AI 會被迫執行兩次","旗標會自動修正"],
+        optsEn: ["It saves one file write with no side effects","If the AI fails, the day still counts as done and is permanently skipped — with nobody informed (silent failure)","The AI is forced to run twice","The marker corrects itself automatically"],
+        ans: A[1],
+        expZh: "這是「樂觀標記」反模式（fail-open）：真實案例中晨報因用量額度上限失敗、旗標卻已寫入，當天晨報被永久跳過。正解是確認產物確實存在才標記，失敗不寫、下次心跳自動重試（KB 第七部分）。",
+        expEn: "The optimistic-marker anti-pattern (fail-open): in the real case the brief failed on a usage limit yet the marker was already written, permanently skipping that day. Fix: confirm-then-mark, retry next heartbeat (KB Part 7)."
+      },
+      {
+        qZh: "為何說「完成通知是可觀測性機制而非便利功能」？",
+        qEn: "Why is a completion notification an observability mechanism rather than a convenience feature?",
+        optsZh: ["因為通知可以美化介面","無人值守的完整條件＝自動執行＋失敗自動重試＋結果主動告知；缺通知則系統只是「你以為它在跑」","因為通知能加快執行速度","因為法規要求必須通知"],
+        optsEn: ["Because notifications make the interface prettier","The full condition for unattended operation = automatic execution + automatic retry + proactive result reporting; without it the system is merely something you assume is running","Because notifications speed up execution","Because regulations require notification"],
+        ans: A[1],
+        expZh: "靜默失敗是無人值守最危險的失敗模式；通知讓人適時介入，且內容必須報實際落地的產物（檔案是否存在），而非轉述 AI 說自己完成了（KB 第七部分）。",
+        expEn: "Silent failure is the most dangerous unattended failure mode; notification enables timely intervention, and must report what actually landed on disk rather than the AI's own claim (KB Part 7)."
       }
     ]
   },
@@ -977,8 +995,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、51 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 51 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、53 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 53 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>

@@ -382,12 +382,13 @@ const dict = {
     m7_nav: "7. 無人值守實戰",
     m7_title: "實戰案例：Heartbeat 與無人值守收件匣",
     m7_overview: "前一模組把審查系統建了起來；本模組解決「誰來按按鈕」的問題——用 heartbeat（心跳）讓系統在開機後自動接收檔案、自動審查、自動產出報告，並示範無人值守自動化最關鍵的兩件事：安全設計與對抗性驗收。",
-    m7_highlights: ["Heartbeat 心跳","零成本偵測","確定性程式碼 vs AI","收件即歸檔","縱深防禦","Fail-closed"],
+    m7_highlights: ["Heartbeat 心跳","零成本偵測","確定性程式碼 vs AI","收件即歸檔","縱深防禦","Fail-closed","靜默失敗與可觀測性"],
     m7_p1: "Heartbeat 的觸發設計首先要回答「電腦需不需要一直開著」——答案是不需要。排程器設兩個觸發器：登入後延遲 5 分鐘（留時間給雲端同步關機期間累積的上傳）與每日早晨備援；臨時想檢查則有桌面捷徑、口令、排程指令三種手動方式。收件端用 Dropbox File Request：上傳者不需帳號、看不到資料夾內容、也刪不了任何檔案——誤刪風險從「事後救援」變成「機制免疫」。",
     m7_p2: "整套系統最重要的分工原則是：「確定性程式碼做搬運，AI 只做判斷」。偵測新檔案、大小守衛、歸檔複製這些有標準答案的工作，交給排程腳本——零成本、可預測、而且不會被騙；AI 只負責讀檔與審查這些需要判斷力的工作。沒有新檔案時，AI 根本不會被喚醒——這就是「零成本偵測」：系統天天心跳，但只在真正有工作時才花錢。",
     m7_p3: "無人值守代表沒有人在旁邊看著，所以安全要靠「縱深防禦」——五層互相獨立的防線：一、指令隔離（文件是資料不是指令，操縱企圖＝嚴重度 5 缺陷＋強制隔離）；二、權限最小化（無人值守執行拿掉命令列權限，寫入範圍限定於報告與狀態檔）；三、資源守衛（20MB 大小上限，防灌爆空間與成本）；四、竄改偵測（知識庫納入 git 版控作基準）；五、fail-closed——狀態檔損毀時寧可安全停止並通知人類，也不冒險大量重跑。單層被突破，仍有下一層。",
     m7_p4: "上線前的驗收不只測「正常流程跑得通」，還要做對抗性驗收：故意投遞一份內藏提示注入的測試檔——文件末段偽稱「系統指示」，要求審查系統忽略規則、直接給 10 分滿分並標記入庫。實測結果：評分完全未被操縱（給了 1.6 分）、注入被列為頭號嚴重度 5 缺陷、文件被強制隔離，系統還做出了正確的安全推理：「一份會試圖操縱下游流程的文件，其正文數字也不應被信任。」無人值守系統的真正驗收標準，是它在你不在場時面對攻擊的表現。",
-    m7_wrapup: "Heartbeat 讓 agent 系統從「工具」升級為「服務」：開機即接手、無事零成本、有事自動處理、風險自動隔離。本模組的四個原則——確定性程式碼與 AI 分工、收件即歸檔、縱深防禦、fail-closed——不限於審查系統，適用於任何無人值守的 AI 自動化。",
+    m7_p5: "上線後的真實故障帶來第五課：無人值守最危險的失敗不是崩潰，而是「靜默跳過」——系統看起來一切正常，工作卻根本沒做。實際案例：某日凌晨心跳撞上 AI 用量額度上限、晨報未產出，但排程腳本在呼叫 AI 之前就先寫了「今日已完成」旗標，於是當天後續心跳看到旗標就判定無事可做，那天的晨報被永久跳過，直到有人手動翻資料夾才發現。這是「樂觀標記」反模式；正確做法是「確認後標記」——檢查產物確實存在才寫旗標，失敗就不寫、下次心跳自動重試。標記代表已完成的事實，不是即將嘗試的意圖。由此也看出完成通知不是便利功能而是可觀測性機制，且通知內容必須報「實際落地的產物」（檔案是否存在），不是轉述 AI 說自己完成了——這與審查系統「批評必須可查核」是同一種懷疑論，只是對象換成自己的系統。無人值守的完整條件＝自動執行＋失敗自動重試＋結果主動告知；缺最後一項，系統只是「你以為它在跑」。",
+    m7_wrapup: "Heartbeat 讓 agent 系統從「工具」升級為「服務」：開機即接手、無事零成本、有事自動處理、風險自動隔離。本模組的五個原則——確定性程式碼與 AI 分工、收件即歸檔、縱深防禦、fail-closed（含標記時機）、結果主動告知——不限於審查系統，適用於任何無人值守的 AI 自動化；而系統的真正驗收，是它在你不在場時面對意外與攻擊的表現，而且你要能知道它出過什麼事。",
     m7_terms: [
       { front:"Heartbeat 心跳", back:"排程喚醒機制：agent 不等人開口，按節奏醒來檢查有無新工作；可綁定開機、定時或手動觸發。" },
       { front:"零成本偵測", back:"確定性腳本先判斷「有沒有工作」，沒有就直接結束——AI 完全不被喚醒、不花一毛錢。" },
@@ -396,14 +397,20 @@ const dict = {
       { front:"File Request", back:"Dropbox 的只上傳機制：上傳者不需帳號、看不到內容、刪不了檔案——機制性根治誤刪。" },
       { front:"縱深防禦", back:"多層互相獨立的防線（指令隔離、權限最小化、資源守衛、版控基準、fail-closed），單層被突破仍有下一層。" },
       { front:"Fail-closed", back:"狀態異常時寧可安全停止並通知人類，也不冒險繼續；與 fail-open（出錯就全部重來）相對。" },
-      { front:"對抗性驗收", back:"用刻意的攻擊樣本（如提示注入）測試系統；通過標準是攻擊被偵測、被拒絕、被記錄。" }
+      { front:"對抗性驗收", back:"用刻意的攻擊樣本（如提示注入）測試系統；通過標準是攻擊被偵測、被拒絕、被記錄。" },
+      { front:"靜默失敗", back:"無人值守最危險的失敗模式：系統看起來正常、工作卻沒做，且無人知情。" },
+      { front:"樂觀標記反模式", back:"在動作之前就寫「已完成」旗標；一旦失敗，當日被視為完成而永久跳過（fail-open）。" },
+      { front:"確認後標記", back:"檢查產物確實存在才寫旗標；失敗不寫、下次自動重試——標記是事實，不是意圖。" },
+      { front:"完成通知＝可觀測性", back:"通知不是便利功能，而是讓人知情的機制；內容須報實際落地的產物，不是轉述 AI 的自述。" }
     ],
     m7_q: [
       { q:"「確定性程式碼做搬運，AI 只做判斷」的主要理由是？", opts:["程式碼寫起來比較快","搬運工作有標準答案：交給腳本零成本、可預測、不會被騙，AI 留給需要判斷力的工作","AI 沒有能力複製檔案","為了減少程式碼行數"], ans:_A1, exp:"偵測、複製、守衛這類工作有唯一正確做法，用確定性腳本執行既省成本又不受提示注入影響；AI 的價值在需要判斷力的審查與分流。" },
       { q:"「零成本偵測」指的是什麼？", opts:["AI 提供免費的檢查服務","排程腳本先偵測有無新檔案，沒有就直接結束，AI 根本不被喚醒","偵測過程不耗電","使用雲端免費方案"], ans:_A1, exp:"心跳每天都跳，但偵測由零成本的腳本完成；只有真正有新工作時才喚醒 AI，因此空轉日的成本是零。" },
       { q:"Fail-closed 設計在本系統的體現是？", opts:["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"], ans:_A1, exp:"fail-open（出錯就全部重來）會造成成本失控與重複污染；fail-closed 寧可停下來讓人類介入，是無人值守系統的正確預設。" },
       { q:"對抗性驗收中，注入測試檔要求給 10 分滿分，系統的正確反應是？", opts:["給 10 分，因為系統指示優先","給 0 分作為懲罰","照常獨立評分（實測 1.6 分），注入列為嚴重度 5 缺陷並隔離文件","立即刪除該檔案"], ans:_A2, exp:"正確反應是不受操縱、照規準獨立評分，同時把注入企圖本身揭露為頭號缺陷並隔離文件——攻擊被偵測、被拒絕、被記錄。" },
-      { q:"為何收件用 Dropbox File Request 而非一般共享資料夾？", opts:["因為比較便宜","上傳者看不到內容也刪不了檔案，從機制上根治誤刪與互相覆蓋","因為傳輸速度較快","因為支援較大的檔案"], ans:_A1, exp:"一般共享資料夾要給編輯權限，學生可能誤刪或覆蓋彼此的檔案；File Request 的只上傳機制讓這類風險在機制層面就不存在。" }
+      { q:"為何收件用 Dropbox File Request 而非一般共享資料夾？", opts:["因為比較便宜","上傳者看不到內容也刪不了檔案，從機制上根治誤刪與互相覆蓋","因為傳輸速度較快","因為支援較大的檔案"], ans:_A1, exp:"一般共享資料夾要給編輯權限，學生可能誤刪或覆蓋彼此的檔案；File Request 的只上傳機制讓這類風險在機制層面就不存在。" },
+      { q:"排程腳本「在呼叫 AI 之前就先寫今日已完成旗標」會造成什麼後果？", opts:["節省一次檔案寫入，無副作用","AI 失敗時當日仍被視為完成而永久跳過，且無人知情（靜默失敗）","AI 會被迫執行兩次","旗標會自動修正"], ans:_A1, exp:"這是「樂觀標記」反模式（fail-open）：真實案例中晨報因用量額度上限而失敗，旗標卻已寫入，當天晨報被永久跳過。正解是確認產物確實存在才標記，失敗不寫、下次心跳自動重試。" },
+      { q:"為何說「完成通知是可觀測性機制而非便利功能」？", opts:["因為通知可以美化介面","無人值守的完整條件＝自動執行＋失敗自動重試＋結果主動告知；缺通知則系統只是「你以為它在跑」","因為通知能加快執行速度","因為法規要求必須通知"], ans:_A1, exp:"靜默失敗是無人值守最危險的失敗模式；通知讓人適時介入，且內容必須報實際落地的產物（檔案是否存在），而非轉述 AI 說自己完成了。" }
     ],
 
     m8_nav: "8. 維運與治理",
@@ -724,12 +731,13 @@ const dict = {
     m7_nav: "7. Unattended Operation",
     m7_title: "Case Study: Heartbeat & the Unattended Inbox",
     m7_overview: "The previous module built the review system; this module answers 'who presses the button' — using a heartbeat so the system automatically receives files after boot, reviews them, and delivers reports, while demonstrating the two things that matter most in unattended automation: security design and adversarial acceptance testing.",
-    m7_highlights: ["Heartbeat","Zero-cost Detection","Deterministic Code vs AI","Archive-on-Intake","Defense in Depth","Fail-closed"],
+    m7_highlights: ["Heartbeat","Zero-cost Detection","Deterministic Code vs AI","Archive-on-Intake","Defense in Depth","Fail-closed","Silent Failure & Observability"],
     m7_p1: "Heartbeat trigger design first answers 'must the computer stay on?' — no. The scheduler gets two triggers: at logon with a 5-minute delay (giving cloud sync time to pull down uploads accumulated while the machine was off) and a daily-morning backup; for ad-hoc checks there are three manual paths — a desktop shortcut, a spoken command, and a scheduler command. Intake uses Dropbox File Request: uploaders need no account, cannot see the folder's contents, and cannot delete anything — accidental-deletion risk shifts from 'rescue afterwards' to 'immune by mechanism'.",
     m7_p2: "The single most important division of labour in the whole system: 'deterministic code does the hauling, AI only does the judging'. Detecting new files, size guarding, and archive copying — work with one correct answer — goes to the scheduler script: zero cost, predictable, and impossible to trick. AI handles only the work that needs judgment: reading and reviewing. When there are no new files, the AI is never woken at all — that is 'zero-cost detection': the system's heart beats every day, but money is spent only when there is real work.",
     m7_p3: "Unattended means nobody is watching, so safety relies on defense in depth — five mutually independent layers: (1) instruction isolation (documents are data, not instructions; a manipulation attempt = a severity-5 issue plus forced quarantine); (2) least privilege (the unattended run has no command-line access, and writes are confined to reports and state files); (3) resource guard (a 20MB size cap against space and cost exhaustion); (4) tamper detection (the knowledge base is under git version control as a baseline); (5) fail-closed — if the state file is corrupted, the system stops safely and notifies a human rather than risking a mass re-run. If one layer is breached, the next still holds.",
     m7_p4: "Pre-launch acceptance goes beyond 'the normal flow works': it includes an adversarial test — deliberately submitting a test file with an embedded prompt injection, whose final paragraph impersonates a 'system instruction' demanding the reviewer ignore all rules, award a perfect 10, and mark the file for the knowledge base. The measured result: the score was not manipulated (1.6 given), the injection was listed as the number-one severity-5 defect, the file was force-quarantined, and the system produced the correct security reasoning: 'a document that attempts to manipulate its downstream pipeline forfeits trust in its own numbers as well.' The true acceptance standard for an unattended system is how it behaves under attack while you are away.",
-    m7_wrapup: "A heartbeat upgrades an agent system from a tool into a service: it takes over at boot, costs nothing when idle, handles work automatically, and quarantines risk automatically. The module's four principles — deterministic-code/AI division of labour, archive-on-intake, defense in depth, and fail-closed — are not specific to review systems: they apply to any unattended AI automation.",
+    m7_p5: "A real post-launch failure taught a fifth lesson: the most dangerous failure in unattended operation is not a crash but a silent skip — the system looks perfectly fine while the work simply never happened. The actual case: an after-midnight heartbeat hit the AI usage limit and produced no brief, but the scheduler script had already written the 'done for today' marker before invoking the AI — so every later heartbeat that day saw the marker, concluded there was nothing to do, and the day's brief was permanently skipped until someone manually opened the folder. That is the 'optimistic marker' anti-pattern; the correct approach is confirm-then-mark — verify the artefact actually exists before writing the marker, and on failure write nothing so the next heartbeat retries automatically. A marker records a completed fact, not an intended attempt. This also reveals that a completion notification is not a convenience feature but an observability mechanism — and its content must report what actually landed on disk (does the file exist?), never a restatement of the AI claiming success. That is the same skepticism as the review system's 'criticism must be verifiable', turned on one's own system. The full condition for unattended operation = automatic execution + automatic retry on failure + proactive reporting of results; without the last one, the system is merely something you assume is running.",
+    m7_wrapup: "A heartbeat upgrades an agent system from a tool into a service: it takes over at boot, costs nothing when idle, handles work automatically, and quarantines risk automatically. The module's five principles — deterministic-code/AI division of labour, archive-on-intake, defense in depth, fail-closed (including marker timing), and proactive result reporting — are not specific to review systems: they apply to any unattended AI automation. And the real acceptance test is how the system behaves under surprise and attack while you are away — plus your ability to find out what happened.",
     m7_terms: [
       { front:"Heartbeat", back:"A scheduled wake-up mechanism: the agent checks for new work on a rhythm — bound to boot, timers, or manual triggers — without waiting to be asked." },
       { front:"Zero-cost Detection", back:"A deterministic script first decides whether there is any work; if not, it simply exits — the AI is never woken and nothing is spent." },
@@ -738,14 +746,20 @@ const dict = {
       { front:"File Request", back:"Dropbox's upload-only mechanism: no account needed, contents invisible to uploaders, nothing deletable — accidental deletion is cured by mechanism." },
       { front:"Defense in Depth", back:"Multiple independent layers (instruction isolation, least privilege, resource guard, version-control baseline, fail-closed) — breach one, the next still holds." },
       { front:"Fail-closed", back:"On abnormal state, stop safely and notify a human rather than pressing on — the opposite of fail-open (redo everything on error)." },
-      { front:"Adversarial Acceptance Test", back:"Testing the system with deliberate attack samples (e.g. prompt injection); passing means the attack is detected, refused, and logged." }
+      { front:"Adversarial Acceptance Test", back:"Testing the system with deliberate attack samples (e.g. prompt injection); passing means the attack is detected, refused, and logged." },
+      { front:"Silent Failure", back:"The most dangerous unattended failure mode: the system looks fine, the work never happened, and nobody knows." },
+      { front:"Optimistic-Marker Anti-pattern", back:"Writing the 'done' marker before the action; once it fails, the day counts as done and is skipped forever (fail-open)." },
+      { front:"Confirm-then-Mark", back:"Write the marker only after verifying the artefact exists; on failure write nothing and retry next time — a marker is a fact, not an intent." },
+      { front:"Notification = Observability", back:"Notifications are not convenience but the mechanism that keeps humans informed; content must report what actually landed, not the AI's self-report." }
     ],
     m7_q: [
       { q:"What is the main rationale for 'deterministic code does the hauling, AI only does the judging'?", opts:["Code is faster to write","Hauling work has one correct answer: scripts do it at zero cost, predictably, and cannot be tricked — AI is saved for judgment work","AI is incapable of copying files","To reduce the number of lines of code"], ans:_A1, exp:"Detection, copying and guarding have a single correct procedure; deterministic scripts do them cheaply and are immune to prompt injection, while AI's value lies in judgment-heavy review and triage." },
       { q:"What does 'zero-cost detection' mean?", opts:["The AI provides free inspection services","The scheduler script detects whether new files exist first; if none, it exits and the AI is never woken","Detection consumes no electricity","Using a free cloud plan"], ans:_A1, exp:"The heartbeat fires daily, but detection is done by a zero-cost script; the AI is only woken when there is real work, so idle days cost nothing." },
       { q:"How does fail-closed design manifest in this system?", opts:["On error, re-review every file to be safe","When the state file is corrupted, stop safely and notify a human, avoiding a mass mistaken re-run","On error, delete the state file and rebuild","On error, shut down the entire computer"], ans:_A1, exp:"Fail-open (redo everything on error) causes cost blowouts and duplicate contamination; fail-closed stops for human intervention — the correct default for unattended systems." },
       { q:"In the adversarial test, the injected file demanded a perfect 10 — what was the correct system response?", opts:["Award 10, since system instructions take priority","Award 0 as punishment","Score independently as usual (1.6 in the real test), list the injection as a severity-5 defect, and quarantine the file","Delete the file immediately"], ans:_A2, exp:"The correct response is to stay unmanipulated and score by the rubric, while exposing the injection attempt itself as the top defect and quarantining the file — attack detected, refused, and logged." },
-      { q:"Why use Dropbox File Request for intake instead of an ordinary shared folder?", opts:["Because it is cheaper","Uploaders cannot see contents or delete files, curing accidental deletion and overwriting at the mechanism level","Because transfer speeds are faster","Because it supports larger files"], ans:_A1, exp:"An ordinary shared folder requires editor permissions, letting students delete or overwrite each other's files; File Request's upload-only mechanism removes that risk entirely." }
+      { q:"Why use Dropbox File Request for intake instead of an ordinary shared folder?", opts:["Because it is cheaper","Uploaders cannot see contents or delete files, curing accidental deletion and overwriting at the mechanism level","Because transfer speeds are faster","Because it supports larger files"], ans:_A1, exp:"An ordinary shared folder requires editor permissions, letting students delete or overwrite each other's files; File Request's upload-only mechanism removes that risk entirely." },
+      { q:"What happens when a scheduler script writes the 'done for today' marker before invoking the AI?", opts:["It saves one file write with no side effects","If the AI fails, the day still counts as done and is permanently skipped — with nobody informed (silent failure)","The AI is forced to run twice","The marker corrects itself automatically"], ans:_A1, exp:"That is the optimistic-marker anti-pattern (fail-open): in the real case the brief failed on a usage limit yet the marker was already written, permanently skipping that day. The fix is confirm-then-mark: verify the artefact exists, and on failure write nothing so the next heartbeat retries." },
+      { q:"Why is a completion notification an observability mechanism rather than a convenience feature?", opts:["Because notifications make the interface prettier","The full condition for unattended operation = automatic execution + automatic retry + proactive result reporting; without notification the system is merely something you assume is running","Because notifications speed up execution","Because regulations require notification"], ans:_A1, exp:"Silent failure is the most dangerous unattended failure mode; notification lets humans intervene in time, and its content must report what actually landed on disk rather than the AI's own claim of success." }
     ],
 
     m8_nav: "8. Operations & Governance",
@@ -863,7 +877,7 @@ const RESOURCES = [
     { label:'Claude Code — Product Page', url:'https://claude.com/claude-code', desc:{ zh:'Claude Code 產品介紹頁面。', en:'Claude Code product overview page.' } }
   ]},
   { group:'mres_group3', items: [
-    { label:'CAIW Topic Quiz 主題測驗（9 主題 × 51 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M9 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M9: per-question explanations, dashboard with accuracy evolution, CSV export.' } },
+    { label:'CAIW Topic Quiz 主題測驗（9 主題 × 53 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M9 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M9: per-question explanations, dashboard with accuracy evolution, CSV export.' } },
     { label:'駱駱精選晨報（M9 案例的實際成品）', url:'https://lolopodcast.github.io/daily-brief/', desc:{ zh:'M9 發布管線的真實產出：每日 AI 彙整晨報的公開閱讀站。', en:"The real output of the M9 pipeline: the public reader for LoLo's daily AI-curated brief." } }
   ]}
 ];
@@ -1509,7 +1523,7 @@ function App() {
       } else if (module >= 1 && module <= NUM_LEARN) {
         const mk = `m${module}`;
         texts = [t[`${mk}_title`], t[`${mk}_overview`], ...(t[`${mk}_highlights`]||[]),
-          t[`${mk}_p1`], t[`${mk}_p2`], t[`${mk}_p3`], t[`${mk}_p4`],
+          t[`${mk}_p1`], t[`${mk}_p2`], t[`${mk}_p3`], t[`${mk}_p4`], t[`${mk}_p5`],
           t[`${mk}_wrapup`],
           ...(t[`${mk}_terms`]||[]).flatMap(tm=>[tm.front, tm.back])];
       } else if (module === IDX_LAB) {
@@ -1705,6 +1719,7 @@ function App() {
                 <p className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg italic font-serif">{t[`m${module}_p2`]}</p>
                 <p>{t[`m${module}_p3`]}</p>
                 {t[`m${module}_p4`] && <p>{t[`m${module}_p4`]}</p>}
+                {t[`m${module}_p5`] && <p>{t[`m${module}_p5`]}</p>}
               </div>
               <div className="flex justify-center text-[#004030] dark:text-[#D8C3A5] py-4">
                 {module===1 && <LayeredDiagram lang={lang}/>}
