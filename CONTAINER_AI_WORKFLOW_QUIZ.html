@@ -599,6 +599,24 @@ const TOPICS = [
         expEn: "Exists? How big? When modified? — all free to answer. A cheap gatekeeper depends on the gate itself needing no intelligence (KB Part 7)."
       },
       {
+        qZh: "「無界等待」（AI 呼叫掛住不回）為何對完成通知機制隱形？",
+        qEn: "Why is 'unbounded waiting' (a hung AI call) invisible to the completion notification?",
+        optsZh: ["因為通知功能被關閉了","因為通知只在流程跑完才發，掛住的執行永遠到不了發通知那一步","因為 AI 攔截了通知","因為日誌檔已滿"],
+        optsEn: ["Because notifications were disabled","Because the notification only fires when the flow finishes, and a hung run never reaches that step","Because the AI intercepts the notification","Because the log file is full"],
+        ans: A[1],
+        expZh: "掛住既不成功也不失敗，流程停在等待中——逾時上限強制讓流程走完，通知與重試機制才輪得到上場（KB 第七部分）。",
+        expEn: "A hang neither succeeds nor fails — the flow is stuck waiting. A timeout cap forces the flow to finish so notification and retry can take over (KB Part 7)."
+      },
+      {
+        qZh: "逾時上限設 45 分鐘、而鎖定失效門檻是 30 分鐘，會產生什麼問題？如何解？",
+        qEn: "A 45-minute timeout cap with a 30-minute stale-lock threshold — what goes wrong, and what is the fix?",
+        optsZh: ["沒有問題，兩者互不相干","第 31 分鐘起其他心跳會判定鎖已失效而闖入、造成雙重執行；解法是等待期間定期刷新鎖定檔","逾時永遠不會觸發","鎖定檔會被自動刪除"],
+        optsEn: ["Nothing; the two are unrelated","From minute 31, another heartbeat deems the lock stale and barges in, causing a double-run; fix: refresh the lock file while waiting","The timeout can never fire","The lock file gets auto-deleted"],
+        ans: A[1],
+        expZh: "兩個以時間為條件的機制疊在一起就可能矛盾——通則：檢查它們的時間值疊加時會發生什麼（KB 第七部分）。",
+        expEn: "Two time-conditioned mechanisms can contradict when stacked — the general rule: check what happens when their values overlap (KB Part 7)."
+      },
+      {
         qZh: "Fail-closed 設計在收件匣系統的體現是？",
         qEn: "How does fail-closed design manifest in the inbox system?",
         optsZh: ["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"],
@@ -1013,8 +1031,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、55 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 55 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、57 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 57 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
