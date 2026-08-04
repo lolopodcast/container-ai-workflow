@@ -617,6 +617,24 @@ const TOPICS = [
         expEn: "Two time-conditioned mechanisms can contradict when stacked — the general rule: check what happens when their values overlap (KB Part 7)."
       },
       {
+        qZh: "腳本內的逾時與通知防護都建好了，為何排程器砍掉執行時仍然什麼紀錄都沒留下？",
+        qEn: "Timeout and notification defenses were built inside the script — why did the scheduler's kill still leave no trace at all?",
+        optsZh: ["因為日誌檔壞了","因為外層（排程器）直接終止整棵程序樹，腳本內的防護連執行的機會都沒有——內層防護觀測不到自己的死亡","因為防護程式碼有錯字","因為通知被防毒軟體攔截"],
+        optsEn: ["The log file was corrupted","The outer layer (scheduler) killed the whole process tree directly, so the script's defenses never got to run — inner defenses cannot observe their own death","The defense code had a typo","Antivirus blocked the notification"],
+        ans: A[1],
+        expZh: "腳本上面的每一層（排程器、容器、CI、OS）都有殺手開關；盤點防護時要問「上層會怎麼殺我？死了會留下什麼痕跡？」（KB 第七部分）",
+        expEn: "Every layer above your script (scheduler, container, CI, OS) has a kill switch; when auditing defenses, ask 'how would my outer layers kill me, and what trace would be left?' (KB Part 7)"
+      },
+      {
+        qZh: "分層逾時的正確順序原則是什麼？",
+        qEn: "What is the correct ordering principle for layered timeouts?",
+        optsZh: ["外層上限應短於內層上限，先砍先贏","會觀測、通知、重試的內層上限必須短於只會無聲砍樹的外層上限","兩層上限應設成一樣長","不需要外層上限"],
+        optsEn: ["The outer limit should be shorter — first to kill wins","The inner cap that observes, notifies, and retries must be shorter than the outer limit that only kills silently","Both limits should be equal","No outer limit is needed"],
+        ans: A[1],
+        expZh: "內層 45 分鐘＜外層 2 小時：順序反了，內層守衛永遠等不到出場，每次都是外層先無聲開刀（KB 第七部分）。",
+        expEn: "Inner 45 min < outer 2 h: reversed, the inner guard never gets its turn — the outer layer always cuts first, silently (KB Part 7)."
+      },
+      {
         qZh: "Fail-closed 設計在收件匣系統的體現是？",
         qEn: "How does fail-closed design manifest in the inbox system?",
         optsZh: ["出錯時把所有檔案重審一遍以求保險","狀態檔損毀時安全停止並通知人類，避免大量誤重跑","出錯時直接刪除狀態檔重建","出錯時關閉整台電腦"],
@@ -1031,8 +1049,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、57 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 57 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、59 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 59 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
