@@ -458,14 +458,23 @@ const dict = {
     ],
 
     m8_nav: "8. 維運與治理",
-    m8_title: "系統上線之後：維運四律",
+    m8_title: "系統上線之後：維運五律",
     m8_overview: "建好、上線、驗收通過不是終點——系統活著的每一天都在變：知識庫會擴充、設定會過時、資產會累積風險。本模組把上線後的維運工作提煉成四條可複用的紀律，並以審查代理人系統的真實維運輪（含 SMMC 領域擴充包的回歸測試）作為案例。",
     m8_highlights: ["同步義務","備份與可見性","設定先驗證","擴充後回歸測試","精確防禦","基準線保護"],
     m8_p1: "第一律：同步義務。宣告 core/ 是「唯一事實來源」只是開始——它其實是一種義務：每當 core 改變，所有衍生品（各平台接頭、濃縮版、文件）都必須跟上，否則知識就地分裂，「唯一」名存實亡。實務作法是把「改 core 之後要同步什麼」寫成明確清單，每次擴充後立即執行，不累積到「有空再說」。實例：領域擴充包遷入 core 的當天，ChatGPT／Gemini 接頭的知識檔清單就從 4 檔同步擴為 11 檔。",
     m8_p2: "第二律：備份與可見性——兩個獨立的決策。關鍵知識資產要問兩個問題：「它有備份嗎？」與「備份該給誰看見？」。審查系統的 core 放在使用者設定資料夾，不在任何雲端同步範圍內——電腦故障等於整套消失，解法是推送 git 遠端。但第二個問題同樣關鍵：這套 core 含課程評分基準等敏感資料，備份庫必須設為 private——「要不要備份」與「能不能公開」不能混為一談，而且備份完成後還要回頭驗證可見性設定確實生效。",
     m8_p3: "第三律：設定先驗證。寫進系統設定的每一筆外部事實——網址、路徑、版本號——都應在寫入前實際驗證，不憑記憶或直覺。實例：晨報巡檢清單的九個候選網址逐一實測可達性後，兩個大站因擋爬蟲（回應 403）被剔除；若憑印象直接寫入，系統每天都會在這兩個網址上白白失敗，而且無人察覺。原則：設定是程式碼的一種，值得同等的驗證紀律。",
     m8_p4: "第四律：擴充後回歸測試——驗新功能，也驗舊防線。系統每次擴充（如新增 SMMC 領域包），上線前用埋錯樣本做回歸測試。實測給了兩個超出預期的觀察：一、精確防禦——測試檔標題寫著「系統測試用，可刪除」，系統正確判定這是描述性註記而非指令，記錄在案但不執行刪除；防禦的成熟度不在「擋掉多少」，在「分得清像指令的資料與真指令」，不過度防禦。二、基準線保護——系統主動註明測試殘稿的低分「不覆寫」該組在 cohort 軌跡中的既有評分，展現對資料完整性的理解，而不只是機械地執行評分。",
-    m8_wrapup: "維運四律：同步義務（core 改了衍生品要跟上）、備份與可見性（要備份，且獨立判斷能否公開）、設定先驗證（設定是程式碼的一種）、擴充後回歸測試（驗新功能也驗舊防線）。系統的可信度不是建成時的狀態，而是維運中的習慣。",
+    m8_p5: "第五律：體例基準——連書寫風格都會悄悄跑掉。第九部分記錄了晨報粗體從 2.8% 漂到 50.4% 的案例，同一個機制隨後在這份教材自己身上重演：SPA 各模組的深入解析段落，最早寫的 103–262 字，最新追加的兩段已達 948 與 920 字。成因完全相同——每次追加都拿上一次的追加當基準，從不回頭跟最初的標準比對。諷刺的是，那兩段正是在講「自我參照的漂移」：寫下一條教訓，不會讓你對它免疫。",
+    m8_pts: [
+      { h:"第五律：體例基準的三個結論", items:[
+        { t:"體例是可量測的", d:"段落字數、句數、粗體佔比、標題層級——風格不是玄學。發現這次漂移的方法，就是把九個模組的段落字數全部列出來比較。" },
+        { t:"當事人看不見自己的漂移", d:"因為他只跟上一次的自己比。需要外部的尺：別人的眼睛，或一份寫下來的基準。這次是使用者一句「你自己不覺得嗎」。" },
+        { t:"劣化會揭露一直存在的缺陷", d:"段落之間本來就沒有間距（外層的 space-y 只作用於直接子元素），段落短時沒人發現。問題不是新出現的，是終於大到看得見。" },
+        { t:"修法：讓載體能承載結構", d:"不是把句子剪短。根因是 KB 有標題與表格、SPA 只能放段落字串，結構在搬運途中被壓平成散文——於是替 SPA 加上要點區塊，段落回到導言角色。當一個通道只能承載一種形狀，所有東西都會變成那個形狀。" }
+      ]}
+    ],
+    m8_wrapup: "維運五律：同步義務（core 改了衍生品要跟上）、備份與可見性（要備份，且獨立判斷能否公開）、設定先驗證（設定是程式碼的一種）、擴充後回歸測試（驗新功能也驗舊防線）、體例基準（風格會漂移，而且當事人看不見）。系統的可信度不是建成時的狀態，而是維運中的習慣。",
     m8_terms: [
       { front:"同步義務", back:"唯一事實來源改變後，所有衍生品必須立即跟上——否則知識就地分裂，「唯一」名存實亡。" },
       { front:"備份與可見性", back:"兩個獨立決策：它有備份嗎？備份該給誰看見？含敏感資料的備份庫必須 private，且事後回頭驗證設定生效。" },
@@ -474,14 +483,22 @@ const dict = {
       { front:"精確防禦", back:"分得清「像指令的資料」與「真指令」：可疑文字記錄在案但不遵從，也不過度防禦。" },
       { front:"基準線保護", back:"測試或殘稿的分數不覆寫既有評分軌跡——理解資料的完整性意義，而非機械執行。" },
       { front:"維運清單化", back:"把「改了 A 要同步 B」寫成明確清單並隨系統演進更新，取代仰賴記憶。" },
-      { front:"維運即習慣", back:"系統的可信度不是建成時的狀態，而是維運中持續執行的紀律。" }
+      { front:"維運即習慣", back:"系統的可信度不是建成時的狀態，而是維運中持續執行的紀律。" },
+      { front:"第五律：體例基準", back:"風格會漂移：本教材段落從 103–262 字漂到 948 字，成因與晨報粗體漂移相同——只跟上一次的自己比。" },
+      { front:"體例是可量測的", back:"段落字數、句數、粗體佔比、標題層級都是數字。把基準記下來就能定期回測，風格不是玄學。" },
+      { front:"當事人看不見自己的漂移", back:"需要外部的尺——別人的眼睛，或一份寫下來的基準。寫下一條教訓，不會讓你對它免疫。" },
+      { front:"載體形狀決定內容形狀", back:"KB 有表格、SPA 只能放段落字串，結構就被壓平成散文。當通道只能承載一種形狀，所有東西都會變成那個形狀。" }
     ],
     m8_q: [
       { q:"「唯一事實來源」為什麼需要「同步義務」配套？", opts:["因為 core 檔案會自動同步到所有地方","因為 core 改變後若衍生品不跟上，知識就地分裂，「唯一」名存實亡","因為同步可以節省儲存空間","因為平台規定必須同步"], ans:_A1, exp:"單一事實來源是靠紀律維持的：每次 core 改變，接頭、濃縮版等衍生品都要立即更新，否則各處版本分歧，宣告就失效了。" },
       { q:"備份決策包含哪兩個獨立的問題？", opts:["備份速度與備份大小","它有備份嗎？備份該給誰看見（可見性）？","備份格式與備份頻率","本機備份與雲端備份的選擇"], ans:_A1, exp:"「要不要備份」與「能不能公開」是兩個獨立決策：含課程評分等敏感資料的知識庫必須推送到 private 儲存庫，且完成後要驗證可見性設定生效。" },
       { q:"「設定先驗證」在晨報巡檢清單的實踐是？", opts:["把所有想到的網址都直接寫入","九個候選網址逐一實測可達性，剔除兩個擋爬蟲的大站後才寫入","只寫入知名大站的網址","請學生幫忙測試網址"], ans:_A1, exp:"憑印象寫入的網址若實際不可達（如回 403），系統會每天白白失敗且無人察覺；先驗證再寫入，是把設定當程式碼對待的紀律。" },
       { q:"擴充後回歸測試要驗證的兩件事是？", opts:["新功能會動＋執行速度變快","新功能會動＋舊防線（如注入防禦）仍然有效","程式碼行數＋檔案大小","介面美觀＋使用者滿意度"], ans:_A1, exp:"擴充可能在不經意間削弱既有防線；回歸測試用埋錯樣本同時驗證新領域包正確運作與安全機制依然完好。" },
-      { q:"測試檔標題寫「可刪除」但系統沒有刪除，只記錄在案——這展現了什麼？", opts:["系統故障，應該要刪除","精確防禦：分得清描述性註記與真指令，不遵從也不過度反應","系統沒有刪除檔案的權限","系統沒讀到標題"], ans:_A1, exp:"成熟的防禦不在「擋掉多少」而在判斷精度：把「像指令的資料」記錄下來但不執行，既不被操縱也不過度防禦。" }
+      { q:"測試檔標題寫「可刪除」但系統沒有刪除，只記錄在案——這展現了什麼？", opts:["系統故障，應該要刪除","精確防禦：分得清描述性註記與真指令，不遵從也不過度反應","系統沒有刪除檔案的權限","系統沒讀到標題"], ans:_A1, exp:"成熟的防禦不在「擋掉多少」而在判斷精度：把「像指令的資料」記錄下來但不執行，既不被操縱也不過度防禦。" },
+      { q:"「第五律：體例基準」的核心主張是什麼？", opts:["文件應該越短越好","連書寫風格都會漂移，而且只跟上一次的自己比的人看不見它","應該統一使用同一種字型","每份文件都要有版本號"], ans:_A1, exp:"本教材段落從最初的 103–262 字漂到 948 字，與晨報粗體 2.8%→50.4% 是同一個機制——自我參照。" },
+      { q:"為何說「寫下一條教訓，不會讓你對它免疫」？", opts:["因為教訓寫了就會忘","因為那兩段漂移最嚴重的段落，內容正是在講「自我參照的漂移」","因為教訓只對別人有效","因為文件不會被閱讀"], ans:_A1, exp:"知道一個陷阱的存在，與能察覺自己正踩在裡面，是兩回事——後者需要外部的尺。" },
+      { q:"段落之間一直沒有間距，卻直到段落變長才被發現，這說明什麼？", opts:["CSS 有隨機性","劣化會揭露一直存在的缺陷——問題不是新出現的，是終於大到看得見","短段落不需要間距","瀏覽器更新造成的"], ans:_A1, exp:"外層的 space-y 只作用於直接子元素，段落包在內層 div 裡從來就沒有間距。內容劣化常是既有缺陷的放大鏡。" },
+      { q:"修正過長段落時，為何說「不是把句子剪短，而是讓載體能承載結構」？", opts:["因為剪短會失去資訊","因為根因是 KB 有表格而 SPA 只能放段落字串，結構在搬運途中被壓平成散文","因為長句比較優美","因為使用者喜歡長文"], ans:_A1, exp:"替 SPA 加上要點區塊後，列舉內容回到它該有的形狀，段落回到導言角色。當一個通道只能承載一種形狀，所有東西都會變成那個形狀。" }
     ],
 
     m9_nav: "9. 發布管線實戰",
@@ -893,14 +910,23 @@ const dict = {
     ],
 
     m8_nav: "8. Operations & Governance",
-    m8_title: "After Go-Live: The Four Disciplines of Operations",
+    m8_title: "After Go-Live: The Five Disciplines of Operations",
     m8_overview: "Building, launching and passing acceptance is not the end — a living system changes every day: the knowledge base grows, configurations go stale, assets accumulate risk. This module distils post-launch operations into four reusable disciplines, using the Review Agent system's real maintenance cycle (including the SMMC domain-pack regression test) as the case.",
     m8_highlights: ["Sync Obligation","Backup & Visibility","Verify-before-Configure","Regression Testing","Precise Defense","Baseline Protection"],
     m8_p1: "Discipline 1: the sync obligation. Declaring core/ the 'single source of truth' is only the beginning — it is actually an obligation: whenever core changes, every derivative (platform adapters, condensed copies, documentation) must follow, or knowledge splinters in place and 'single' becomes a name only. The practical method: write down 'what must be synced after changing core' as an explicit checklist, and execute it immediately after every extension rather than 'when there's time'. Example: the day the domain packs migrated into core, the ChatGPT/Gemini adapters' knowledge-file list was synced from 4 files to 11.",
     m8_p2: "Discipline 2: backup and visibility — two independent decisions. Ask two questions of every critical knowledge asset: 'Is it backed up?' and 'Who should the backup be visible to?'. The review system's core lives in a user-settings folder outside any cloud sync — a machine failure means losing the whole thing; the fix is pushing to a git remote. But the second question matters just as much: this core contains sensitive data such as course grading baselines, so the backup repository must be private. 'Whether to back up' and 'whether it can be public' must never be conflated — and after backing up, go back and verify the visibility setting actually took effect.",
     m8_p3: "Discipline 3: verify before you configure. Every external fact written into system configuration — URLs, paths, version numbers — should be actually verified before being written, not recalled from memory or intuition. Example: the morning-brief patrol list's nine candidate URLs were each tested for reachability; two major sites were dropped for blocking crawlers (HTTP 403). Had they been written from impression, the system would have silently failed on those two URLs every single day. The principle: configuration is a form of code, and deserves the same verification discipline.",
     m8_p4: "Discipline 4: regression-test after every extension — verify the new feature and the old defenses. Each time the system is extended (e.g. adding the SMMC domain pack), run a planted-flaw regression test before go-live. The real test yielded two observations beyond expectations: first, precise defense — the test file's title said 'for system testing, deletable', and the system correctly judged this a descriptive annotation rather than an instruction, logging it without deleting anything; defensive maturity lies not in 'how much gets blocked' but in telling instruction-like data from real instructions, without over-defending. Second, baseline protection — the system proactively noted that the low score of a test fragment 'does not overwrite' the group's existing score in the cohort trajectory, showing an understanding of data integrity rather than mechanical scoring.",
-    m8_wrapup: "The four disciplines of operations: the sync obligation (derivatives follow when core changes), backup & visibility (back up, and independently judge whether it can be public), verify-before-configure (configuration is code), and regression testing after extension (verify new features and old defenses). A system's trustworthiness is not its state at construction — it is the habits of its operation.",
+    m8_p5: "The fifth discipline is a style baseline — even the way you write drifts. Part 9 records the brief's bold ratio sliding from 2.8% to 50.4%, and the same mechanism then repeated inside this teaching material: the deep-dive paragraphs written first ran 103-262 characters, while the two most recently appended had reached 948 and 920. The cause was identical — each addition was measured against the previous addition rather than the original standard. The irony is that those two paragraphs were the ones explaining self-referential drift: writing a lesson down does not make you immune to it.",
+    m8_pts: [
+      { h:"The fifth discipline: three conclusions", items:[
+        { t:"Style is measurable", d:"Paragraph length, sentence count, bold ratio, heading depth - style is not a mystery. This drift was found by listing the paragraph lengths of all nine modules side by side." },
+        { t:"Authors cannot see their own drift", d:"Because they only compare against their previous self. An external ruler is required: another pair of eyes, or a written-down baseline. Here it was one question from the user - 'don't you think so yourself?'" },
+        { t:"Degradation exposes defects that were always there", d:"The paragraphs never had spacing at all, since the outer space-y applies only to direct children; nobody noticed while they were short. The defect was not new, it had merely grown visible." },
+        { t:"The fix: let the medium carry structure", d:"Not shortening sentences. The KB had headings and tables while the SPA could only hold paragraph strings, so structure was flattened into prose in transit - hence a points block for the SPA, with paragraphs returning to their role as leads. When a channel can carry only one shape, everything becomes that shape." }
+      ]}
+    ],
+    m8_wrapup: "The five disciplines of operations: the sync obligation (derivatives follow when core changes), backup & visibility (back up, and independently judge whether it can be public), verify-before-configure (configuration is code), regression testing after extension (verify new features and old defenses), and a style baseline (style drifts, and its author cannot see it). A system's trustworthiness is not its state at construction — it is the habits of its operation.",
     m8_terms: [
       { front:"Sync Obligation", back:"When the single source of truth changes, every derivative must follow immediately — otherwise knowledge splinters and 'single' becomes a name only." },
       { front:"Backup & Visibility", back:"Two independent decisions: is it backed up? Who may see the backup? Sensitive backups must be private — and verify the setting took effect." },
@@ -909,14 +935,22 @@ const dict = {
       { front:"Precise Defense", back:"Telling instruction-like data from real instructions: log suspicious text without obeying it — and without over-reacting." },
       { front:"Baseline Protection", back:"Scores from tests or fragments never overwrite existing grading trajectories — understanding data integrity, not mechanical execution." },
       { front:"Checklist-driven Ops", back:"Write 'changing A requires syncing B' as an explicit list that evolves with the system, instead of relying on memory." },
-      { front:"Operations as Habit", back:"A system's trustworthiness is not its state at construction but the disciplines continuously practised in operation." }
+      { front:"Operations as Habit", back:"A system's trustworthiness is not its state at construction but the disciplines continuously practised in operation." },
+      { front:"Fifth Discipline: Style Baseline", back:"Style drifts: this material's paragraphs slid from 103-262 characters to 948, by the same mechanism as the brief's bold - comparing only against one's previous self." },
+      { front:"Style Is Measurable", back:"Paragraph length, sentence count, bold ratio, heading depth are all numbers. Record the baseline and you can re-measure against it; style is no mystery." },
+      { front:"Authors Cannot See Their Own Drift", back:"An external ruler is required — another pair of eyes, or a written-down baseline. Writing a lesson down does not make you immune to it." },
+      { front:"The Medium Shapes the Content", back:"The KB had tables while the SPA held only paragraph strings, so structure flattened into prose. When a channel carries one shape, everything becomes that shape." }
     ],
     m8_q: [
       { q:"Why does a 'single source of truth' need a 'sync obligation' to go with it?", opts:["Because core files sync everywhere automatically","Because if derivatives don't follow when core changes, knowledge splinters and 'single' becomes a name only","Because syncing saves storage space","Because the platform requires syncing"], ans:_A1, exp:"A single source of truth is maintained by discipline: every core change must propagate to adapters and condensed copies immediately, or versions diverge and the declaration fails." },
       { q:"Which two independent questions make up the backup decision?", opts:["Backup speed and backup size","Is it backed up? Who should the backup be visible to?","Backup format and backup frequency","Choosing between local and cloud backup"], ans:_A1, exp:"'Whether to back up' and 'whether it can be public' are independent: a knowledge base containing grading data must go to a private repository, verified after the fact." },
       { q:"How was 'verify-before-configure' practised for the morning-brief patrol list?", opts:["Writing in every URL that came to mind","Testing all nine candidate URLs for reachability and dropping the two that block crawlers before writing them in","Only writing in well-known big sites","Asking students to test the URLs"], ans:_A1, exp:"URLs written from impression that turn out unreachable (e.g. 403) make the system fail silently every day; verifying first treats configuration as code." },
       { q:"What two things must a post-extension regression test verify?", opts:["The new feature works + execution got faster","The new feature works + the old defenses (e.g. injection defense) still hold","Lines of code + file size","UI beauty + user satisfaction"], ans:_A1, exp:"An extension can quietly weaken existing defenses; the planted-flaw test verifies both the new domain pack and the intact security mechanisms." },
-      { q:"The test file's title said 'deletable', yet the system only logged it without deleting — what does this demonstrate?", opts:["A system fault; it should have deleted","Precise defense: telling descriptive annotations from real instructions, neither obeying nor over-reacting","The system lacked permission to delete files","The system failed to read the title"], ans:_A1, exp:"Mature defense is about judgment precision: recording instruction-like data without executing it — neither manipulated nor over-defensive." }
+      { q:"The test file's title said 'deletable', yet the system only logged it without deleting — what does this demonstrate?", opts:["A system fault; it should have deleted","Precise defense: telling descriptive annotations from real instructions, neither obeying nor over-reacting","The system lacked permission to delete files","The system failed to read the title"], ans:_A1, exp:"Mature defense is about judgment precision: recording instruction-like data without executing it — neither manipulated nor over-defensive." },
+      { q:"What is the core claim of the fifth discipline, a style baseline?", opts:["Documents should be as short as possible","Even the way you write drifts, and anyone comparing only against their previous self cannot see it","Everything should use one typeface","Every document needs a version number"], ans:_A1, exp:"This material's paragraphs slid from 103-262 characters to 948 — the same self-referential mechanism as the brief's bold going 2.8% to 50.4%." },
+      { q:"Why does 'writing a lesson down not make you immune to it'?", opts:["Because written lessons are forgotten","Because the two most drifted paragraphs were the very ones explaining self-referential drift","Because lessons only apply to other people","Because documents go unread"], ans:_A1, exp:"Knowing a trap exists and noticing you are standing in it are different things — the second needs an external ruler." },
+      { q:"Paragraphs never had spacing, yet nobody noticed until they grew long. What does this show?", opts:["CSS behaves randomly","Degradation exposes defects that were always there — the problem was not new, it had merely grown visible","Short paragraphs need no spacing","A browser update caused it"], ans:_A1, exp:"The outer space-y applies only to direct children, and the paragraphs sat inside an inner div, so they never had spacing. Degrading content often magnifies an existing defect." },
+      { q:"Why was the fix 'let the medium carry structure' rather than 'shorten the sentences'?", opts:["Shortening would lose information","Because the root cause was that the KB had tables while the SPA held only paragraph strings, flattening structure into prose in transit","Because long sentences read better","Because users prefer long text"], ans:_A1, exp:"Once the SPA gained a points block, enumerations returned to their proper shape and paragraphs to their role as leads. When a channel carries one shape, everything becomes that shape." }
     ],
 
     m9_nav: "9. Publishing Pipeline",
@@ -1049,7 +1083,7 @@ const RESOURCES = [
     { label:'Claude Code — Product Page', url:'https://claude.com/claude-code', desc:{ zh:'Claude Code 產品介紹頁面。', en:'Claude Code product overview page.' } }
   ]},
   { group:'mres_group3', items: [
-    { label:'CAIW Topic Quiz 主題測驗（9 主題 × 69 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M9 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M9: per-question explanations, dashboard with accuracy evolution, CSV export.' } },
+    { label:'CAIW Topic Quiz 主題測驗（9 主題 × 73 題）', url:'./CONTAINER_AI_WORKFLOW_QUIZ.html', desc:{ zh:'對應 M1–M9 的自我測驗：逐題解析、儀表板追蹤正確率演進、CSV 匯出。', en:'Self-quiz mapped to M1–M9: per-question explanations, dashboard with accuracy evolution, CSV export.' } },
     { label:'駱駱精選晨報（M9 案例的實際成品）', url:'https://lolopodcast.github.io/daily-brief/', desc:{ zh:'M9 發布管線的真實產出：每日 AI 彙整晨報的公開閱讀站。', en:"The real output of the M9 pipeline: the public reader for LoLo's daily AI-curated brief." } }
   ]}
 ];
