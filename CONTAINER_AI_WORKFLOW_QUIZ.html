@@ -804,6 +804,51 @@ const TOPICS = [
         ans: A[1],
         expZh: "缺口由使用者發現而非系統稽核——一致性要靠清單不靠運氣；省略防禦是未經討論的刻意取捨——agent 應主動揭露設計省略，把決定權留給人（KB 第九部分設計五）。",
         expEn: "The gap was found by the user, not an audit — parity needs a checklist, not luck; the omission was an undiscussed trade-off — agents should surface design omissions and leave the ruling to the human (KB Part 9, Design 5)."
+      },
+      {
+        qZh: "晨報粗體佔比 11 天從 2.8% 漲到 50.4%，成因是什麼？",
+        qEn: "Bold rose from 2.8% to 50.4% over eleven issues. What caused it?",
+        optsZh: ["模型版本更新導致文風改變","SOP 要求「與昨日逐則比對」，AI 連文體一起參照昨報，把昨天的粗體密度當標準再加碼——自我參照的回饋迴圈","閱讀站的 CSS 設定錯誤","Markdown 解析器的 bug"],
+        optsEn: ["A model update changed the writing style","The SOP asks each brief to be compared against yesterday's, so the AI referenced yesterday's STYLE too, treating its bold density as the standard and adding more — a self-referential feedback loop","A CSS mistake on the reader site","A bug in the Markdown parser"],
+        ans: A[1],
+        expZh: "凡是把自己昨天的輸出當今天參照的系統都會漂移。比對是為了比對事實與進展，不是比對文體——這一點必須寫成明文，因為它不會自己成立（KB 第九部分設計六）。",
+        expEn: "Any system using its own previous output as today's reference will drift. Comparison is for facts and progress, not style — and that must be written down, because it does not hold by itself (KB Part 9, Design 6)."
+      },
+      {
+        qZh: "把粗體字重從 700 改成 600 為何毫無效果？",
+        qEn: "Why did changing bold from weight 700 to 600 have no effect at all?",
+        optsZh: ["因為 CSS 沒有正確套用","因為中文備援字型只有 Regular 與 Bold 兩級，500 以上一律進位成 Bold","因為瀏覽器快取沒有清除","因為字重只影響英文"],
+        optsEn: ["The CSS was never applied","The CJK fallback face ships only Regular and Bold, so anything above 500 snaps back to Bold","The browser cache was not cleared","Font weight only affects Latin text"],
+        ans: A[1],
+        expZh: "computed 值確實是 600（設定有效），但畫進 canvas 數墨水量，600 與 700 完全相同、400 才少 34%——檢查了設定值不等於檢查了結果（KB 第九部分設計六）。",
+        expEn: "The computed value really was 600 — the setting worked. But counting ink in a canvas shows 600 and 700 are identical, and only 400 is 34% lighter: checking the setting is not checking the result (KB Part 9, Design 6)."
+      },
+      {
+        qZh: "字重、顏色、底色三種修法都失敗，共同的錯誤是什麼？",
+        qEn: "Weight, colour and tint all failed. What was the shared mistake?",
+        optsZh: ["都沒有清除快取","都在改「怎麼標記」，而問題是「標記多少」——標記面積始終是 63%","都沒有做雙語處理","都改在顯示端而非產製端"],
+        optsEn: ["None of them cleared the cache","All changed HOW things were marked when the problem was HOW MUCH — 63% of the text stayed marked throughout","None handled both languages","All were display-side rather than production-side"],
+        ans: A[1],
+        expZh: "換顏料不會讓牆變小。真正有效的是給強調一個預算、超支就降級，直接減少標記面積（KB 第九部分設計六）。",
+        expEn: "Changing the paint does not shrink the wall. What worked was giving emphasis a budget and demoting over-budget runs, reducing the marked area itself (KB Part 9, Design 6)."
+      },
+      {
+        qZh: "為何要看粗體片段的「長度分布」而不只看總佔比？",
+        qEn: "Why examine the length DISTRIBUTION of bold runs rather than just the total?",
+        optsZh: ["因為總佔比不容易計算","總量說「有問題」，分布說「該砍哪個」：中位數 9→29 字、最長 51→220 字，長片段才是那面牆","因為分布比較容易視覺化","因為總佔比會隨螢幕寬度變動"],
+        optsEn: ["The total is hard to compute","The total says 'something is wrong'; the distribution says 'which part to cut' — median 9→29 chars, max 51→220 — long runs are the wall","Distributions are easier to visualise","The total varies with screen width"],
+        ans: A[1],
+        expZh: "短片段是關鍵詞與數字（有資訊價值），長片段是整句話。只看聚合指標常導致改錯地方（KB 第九部分設計六）。",
+        expEn: "Short runs are keywords and figures that carry information; long runs are whole sentences. Aggregate metrics alone often send you to the wrong lever (KB Part 9, Design 6)."
+      },
+      {
+        qZh: "「強調預算＋依長度降級」為何優於「門檻＋樣式切換」？",
+        qEn: "Why does 'budget plus longest-first demotion' beat 'threshold plus style switch'?",
+        optsZh: ["因為程式碼比較短","預算保證結果落在目標內、優先序決定犧牲誰；門檻只能二分，還得為每一檔設計一套樣式","因為不需要量測","因為可以硬編日期清單"],
+        optsEn: ["The code is shorter","The budget guarantees the outcome lands inside the target while the priority decides what is sacrificed; a threshold can only split in two and still needs a style per bucket","It requires no measurement","It allows hard-coding a list of dates"],
+        ans: A[1],
+        expZh: "所有期別因此收斂到約 19%、呈現統一回真粗體；判斷依渲染後實際密度而非日期，未來再漂移會自動處理，合規新刊完全不受影響（KB 第九部分設計六）。",
+        expEn: "Every issue converged to ~19% in a single treatment — real bold. Judging by measured density rather than dates means future drift is handled automatically and compliant issues are never touched (KB Part 9, Design 6)."
       }
     ]
   }
@@ -1049,8 +1094,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、59 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 59 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、64 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 64 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
