@@ -849,6 +849,51 @@ const TOPICS = [
         ans: A[1],
         expZh: "所有期別因此收斂到約 19%、呈現統一回真粗體；判斷依渲染後實際密度而非日期，未來再漂移會自動處理，合規新刊完全不受影響（KB 第九部分設計六）。",
         expEn: "Every issue converged to ~19% in a single treatment — real bold. Judging by measured density rather than dates means future drift is handled automatically and compliant issues are never touched (KB Part 9, Design 6)."
+      },
+      {
+        qZh: "語音導覽為何從兩層改為三層（重點／主題／單則）？",
+        qEn: "Why did voice guidance move from two tiers to three (digest / topic / item)?",
+        optsZh: ["因為三層比較好看","因為量測後發現全文朗讀 127 分鐘、主題節平均 18 分鐘，只有單則約 4 分鐘是能聽完的單位","因為瀏覽器限制最多三層","因為使用者要求三個按鈕"],
+        optsEn: ["Three tiers simply look better","Measurement showed 127 minutes for a full read and 18 per topic, while a single item at ~4 minutes is the only unit anyone finishes","Browsers cap navigation at three levels","The user asked for three buttons"],
+        ans: A[1],
+        expZh: "量體不是實作細節，它會反過來決定資訊架構——先量再設計（KB 第九部分設計七）。",
+        expEn: "Volume is not an implementation detail; it dictates the information architecture. Measure first, then design (KB Part 9, Design 7)."
+      },
+      {
+        qZh: "加上語音朗讀時，為何必須先唸免責聲明並保留「待查核」？",
+        qEn: "Why must a disclaimer be spoken and the verification marker kept audible when adding narration?",
+        optsZh: ["為了讓音檔長一點","因為畫面上的徽章與提醒框在語音中全部消失，聽的人無從得知哪些未經查證","因為法律規定語音必須有聲明","因為 TTS 引擎需要暖機"],
+        optsEn: ["To make the audio longer","Because the on-screen badges and disclaimer box vanish in audio, leaving listeners unable to tell what was never verified","Because the law requires spoken disclaimers","Because the TTS engine needs warm-up text"],
+        ans: A[1],
+        expZh: "換一種呈現形式時，最容易被無聲丟掉的就是限定條件——與「摺疊≠保密」是同型問題（KB 第九部分設計七）。",
+        expEn: "When you change the form of presentation, the qualifiers are the first thing to disappear silently — the same shape as 'folding is not secrecy' (KB Part 9, Design 7)."
+      },
+      {
+        qZh: "主題標題旁的播放鍵只看得到圓框，根因與通則是？",
+        qEn: "Section play buttons showed only their outline. What was the cause and the rule?",
+        optsZh: ["按鈕字級太小；應放大字級","按鈕文字色與標題色塊的背景色相同；控制項放進已有配色的區塊時應繼承顏色而非寫死","瀏覽器不支援該符號；應改用圖片","CSS 載入順序錯誤；應調整順序"],
+        optsEn: ["The glyph was too small; enlarge it","The button's colour equalled the heading block's background; controls inside an already-coloured block should inherit colour rather than hard-code it","The browser lacked the glyph; use an image","CSS load order was wrong; reorder it"],
+        ans: A[1],
+        expZh: "深色 gold on gold、淺色 green on green。用 color:inherit 讓按鈕繼承標題文字色，兩種主題自動正確（KB 第九部分設計七）。",
+        expEn: "Gold on gold in dark, green on green in light. color:inherit makes the button match the heading's own text colour, correct in both themes by construction (KB Part 9, Design 7)."
+      },
+      {
+        qZh: "切換語速卻「感覺沒差別」，真正的原因是什麼？",
+        qEn: "Speed changes 'felt inert'. What was actually happening?",
+        optsZh: ["Windows 語音不支援調速","主動呼叫 cancel() 仍會觸發完成事件，導致索引前進並重複發聲","localStorage 沒有寫入","語速範圍限制在 0.9-1.1"],
+        optsEn: ["Windows voices ignore rate changes","Calling cancel() still fires the completion event, so the queue advanced and spoke twice","localStorage was never written","Rate is clamped to 0.9-1.1"],
+        ans: A[1],
+        expZh: "主動取消必須與自然結束區分（抑制旗標），否則佇列會跳號。凡是可中止的非同步流程都要問這一句（KB 第九部分設計七）。",
+        expEn: "An intentional cancel must be distinguished from a natural end via a suppress flag, or the queue skips. Ask this of any abortable async flow (KB Part 9, Design 7)."
+      },
+      {
+        qZh: "本專案多次「查到 bug」最後卻是量測假象，共同結構是什麼？",
+        qEn: "Several 'bugs' in this project turned out to be measurement artifacts. What is the shared structure?",
+        optsZh: ["程式碼寫得太複雜","量測工具與被量測對象共用同一個執行環境，環境的限制被誤記在程式頭上","瀏覽器版本太舊","測試資料不足"],
+        optsEn: ["The code was too complex","The measuring tool shares an execution environment with what it measures, so the environment's limits get blamed on the code","The browser was outdated","There was too little test data"],
+        ans: A[1],
+        expZh: "textContent 串接、transition 暫態、背景分頁計時器節流、rAF 凍結皆屬此類。對策：換一種量法交叉驗證，並先確認尺本身準不準（KB 第九部分結語）。",
+        expEn: "textContent concatenation, transition transients, throttled background timers and frozen rAF all belong here. Cross-check by another method, and confirm the ruler itself works (KB Part 9, closing section)."
       }
     ]
   }
@@ -1094,8 +1139,8 @@ function Home({ state, onStart, setView }) {
           AI Containerization & Advanced Agent Workflow · Topic Quiz
         </div>
         <Bi
-          zh="共 9 個主題、64 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="9 topics · 64 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
+          zh="共 9 個主題、69 道題目，對應知識庫 M1–M9。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
+          en="9 topics · 69 questions, mapped to KB modules M1–M9. Submit per topic, retry or move on. All history is tracked in the Dashboard."
           sizeZh="text-base" sizeEn="text-sm"
         />
       </section>
